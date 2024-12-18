@@ -1,0 +1,20 @@
+package game
+
+// import "github.com/Megidy/k/static/components"
+
+templ Game() {
+	<head>
+		<title>Game</title>
+		<script src="https://unpkg.com/htmx.org@1.9.8"></script>
+		<script src="https://unpkg.com/htmx.org/dist/ext/multi-swap.js"></script>
+		<script src="https://unpkg.com/htmx.org/dist/ext/ws.js"></script>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	</head>
+	<body>
+		<div hx-ext="ws" ws-connect="/ws/game">
+			<div id="game">
+
+			</div>
+		</div>
+	</body>
+}
