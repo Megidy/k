@@ -1,0 +1,18 @@
+package components
+
+import "github.com/Megidy/k/types"
+import "fmt"
+
+
+templ Question(question types.Question) {
+	<div hx-swap-oob="innerHTML:#game">
+		<p>{ question.Question }</p>
+        <form id="form" ws-send>
+            for index,answer:=range question.Answers{
+                <input type="radio" id={fmt.Sprintf("%d",index)}name={question.Id} value={answer}>
+                <label for={fmt.Sprintf("%d",index)}> {answer}</label><br>
+            }
+            <button type="submit">submit</button>
+        </form>
+	</div>
+}
