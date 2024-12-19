@@ -20,25 +20,39 @@ var upgrader = websocket.Upgrader{
 
 // implement not with the sleep but with the members passsed the current question
 type Manager struct {
-	mu sync.Mutex
+	//number of members
 
-	points       map[*Client]int
-	clients      map[*Client]bool
+	//number of questions
+	//questions
+
+	roomID string
+
+	mu sync.Mutex
+	//points score
+	points map[*Client]int
+	//map of all clients
+	clients map[*Client]bool
+	//question
 	currQuestion int
 	questions    []types.Question
 	broadcast    chan types.Question
-	doneCh       chan bool
-	done         map[*Client]bool
+	//doneCh to comunicate with message queue
+	doneCh chan bool
+	done   map[*Client]bool
+	//accessCh to start game
+	accessCh chan bool
 }
 
-func NewManager() *Manager {
-	return &Manager{
+func NewManager(id string) *Manager {
+	manager := &Manager{
+		roomID:    id,
 		mu:        sync.Mutex{},
 		points:    make(map[*Client]int),
 		clients:   make(map[*Client]bool),
 		done:      make(map[*Client]bool),
 		broadcast: make(chan types.Question),
 		doneCh:    make(chan bool, 1),
+		accessCh:  make(chan bool),
 		questions: []types.Question{
 			{
 				Id:            uuid.NewString(),
@@ -67,7 +81,14 @@ func NewManager() *Manager {
 		},
 		currQuestion: 0,
 	}
+	go manager.MessageQueue()
+	go manager.CheckReadiness()
+	go manager.SetClientsInReadiness()
+	go manager.StartGame()
+	return manager
 }
+
+// func FindManagerOfGame(id string)
 func (m *Manager) AddClientToConnectionPool(client *Client) error {
 
 	m.mu.Lock()
@@ -98,7 +119,7 @@ func (m *Manager) NewConnection(c *gin.Context) {
 	}
 	client := NewClient(uuid.NewString(), wsConn, m)
 	m.AddClientToConnectionPool(client)
-
+	<-m.accessCh
 	go client.WritePump()
 	go client.ReadPump()
 }
@@ -109,6 +130,7 @@ func (m *Manager) MessageQueue() {
 		case done, ok := <-m.doneCh:
 			if !ok {
 				log.Println("failed to read from doneCh : message queue")
+				return
 			}
 			if m.currQuestion < 4 {
 
@@ -177,29 +199,12 @@ func (m *Manager) SetClientsInReadiness() {
 
 }
 
-// func (m *Manager) WriteQuestionToClients(question types.Question) {
-// }
-
-// func (m *Manager) WriteQuestionToAllUsers() {
-// select {
-// case v, ok := <-m.doneCh:
-// 	if !ok {
-// 		log.Println("done ch is not ok")
-// 		return
-// 	}
-// 	if v {
-// 		if m.currQuestion != 4 {
-
-// 			m.currQuestion++
-// 			m.doneCh <- false
-// 		} else if m.currQuestion == 4 {
-// 			m.currQuestion = 0
-// 		}
-// 	} else {
-// 		m.broadcast <- m.questions[m.currQuestion]
-// 	}
-// }
-
-// m.doneCh <- false
-
-// }
+func (m *Manager) StartGame() {
+	for {
+		if len(m.clients) == 2 {
+			m.accessCh <- true
+			close(m.accessCh)
+			return
+		}
+	}
+}
