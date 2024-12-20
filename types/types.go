@@ -2,6 +2,12 @@ package types
 
 import "github.com/gin-gonic/gin"
 
+type User struct {
+	ID       string
+	UserName string
+	Email    string
+	Password string
+}
 type Topic struct {
 	TopicID string
 	UserID  string
@@ -28,4 +34,8 @@ type ClientSideHandler interface {
 type GameStore interface {
 	CreateTopic(questions []Question) error
 	GetUsersTopics(userID string) ([]Topic, error)
+	GetQuestionsByTopicName(TopicName string) ([]Question, error)
+}
+type UserStore interface {
+	GetUserById(id string) (*User, error)
 }
