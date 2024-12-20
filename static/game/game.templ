@@ -1,8 +1,10 @@
 package game
 
+import "fmt"
+
 // import "github.com/Megidy/k/static/components"
 
-templ Game() {
+templ Game(roomID string) {
 	<head>
 		<title>Game</title>
 		<script src="https://unpkg.com/htmx.org@1.9.8"></script>
@@ -11,9 +13,9 @@ templ Game() {
 		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 	</head>
 	<body>
-		<div hx-ext="ws" ws-connect="/ws/game">
+		<div hx-ext="ws" ws-connect={fmt.Sprintf("/ws/game/handler/%s",roomID)}>
 			<div id="game">
-
+				<p>Waiting for other players</p>
 			</div>
 		</div>
 	</body>
