@@ -3,7 +3,7 @@ package game
 import (
 	"sync"
 
-	"github.com/google/uuid"
+	"github.com/Megidy/k/types"
 )
 
 // temporary
@@ -16,14 +16,12 @@ var globalRoomManager = &RoomManager{
 	rooms: make(map[string]*Manager),
 }
 
-func (rm *RoomManager) CreateRoom() string {
+func (rm *RoomManager) CreateRoom(roomID string, numberOfPlayers, amountOfQuestions int, questions []types.Question) {
 
-	roomID := uuid.NewString()
-	manager := NewManager(roomID)
+	manager := NewManager(roomID, numberOfPlayers, amountOfQuestions, questions)
 	rm.mu.Lock()
 	rm.rooms[roomID] = manager
 	rm.mu.Unlock()
-	return roomID
 }
 
 func (rm *RoomManager) GetManager(roomID string) (*Manager, bool) {
@@ -31,4 +29,10 @@ func (rm *RoomManager) GetManager(roomID string) (*Manager, bool) {
 	manager, exists := rm.rooms[roomID]
 	rm.mu.Unlock()
 	return manager, exists
+}
+
+func (rm *RoomManager) EndRoomSession(roomID string) {
+	rm.mu.Lock()
+	delete(rm.rooms, roomID)
+	rm.mu.Unlock()
 }
