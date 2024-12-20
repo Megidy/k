@@ -2,6 +2,8 @@ package game
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"strconv"
@@ -14,26 +16,26 @@ import (
 	"github.com/google/uuid"
 )
 
-type GameHandler struct {
+type gameHandler struct {
 	clienSideHandler types.ClientSideHandler
 	gameStore        types.GameStore
 }
 
-func NewGameHandler(clienSideHandler types.ClientSideHandler, gameStore types.GameStore) *GameHandler {
-	return &GameHandler{
+func NewGameHandler(clienSideHandler types.ClientSideHandler, gameStore types.GameStore) *gameHandler {
+	return &gameHandler{
 		clienSideHandler: clienSideHandler,
 		gameStore:        gameStore,
 	}
 }
 
-func (h *GameHandler) RegisterRoutes(router gin.IRouter) {
+func (h *gameHandler) RegisterRoutes(router gin.IRouter) {
 	//game Handlers:
 	//1 : handle template for game
 	router.GET("/game/:roomID", h.HandleGame)
 	//handler information about room , will add questions
-	router.GET("/game/:roomID/info", h.LoadInfoTempl)
+	router.GET("/game/:roomID/info/:players/:questions", h.LoadInfoTempl)
 	//confirm information about room ,redirect to the game handler : /game/:roomID
-	router.POST("/game/:roomID/info/confirm", h.ConfirmInfo)
+	router.POST("/game/:roomID/info/:players/:questions/confirm", h.ConfirmInfo)
 	//2 : handle ws connection for game
 	router.GET("/ws/game/handler/:roomID", h.HandleWSConnectionForGame)
 
@@ -51,35 +53,58 @@ func (h *GameHandler) RegisterRoutes(router gin.IRouter) {
 	router.POST("/topic/:topicID/:name/:amountOfQuestions/questions/confirm", h.ConfirmCreationOfQuestion)
 }
 
-func (h *GameHandler) LoadInfoTempl(c *gin.Context) {
+func (h *gameHandler) LoadInfoTempl(c *gin.Context) {
 	roomID := c.Param("roomID")
-	topics, err := h.gameStore.GetUsersTopics("35fbe6ad-7fe8-4ee7-9732-bae69f3ee80a")
+	topics, err := h.gameStore.GetUsersTopics("7e53c152-4862-4f82-9f3d-d77c6d69c564")
 	if err != nil {
 		log.Println("error : ", err)
 		return
 	}
+	p := c.Param("players")
+
+	q := c.Param("questions")
+
 	log.Println("topic avaible : ", topics)
-	comp := room.LoadInfoPage(topics, topics, roomID)
+	comp := room.LoadInfoPage(topics, topics, roomID, p, q)
 	comp.Render(context.Background(), c.Writer)
 
 }
-func (h *GameHandler) ConfirmInfo(c *gin.Context) {
+func (h *gameHandler) ConfirmInfo(c *gin.Context) {
 	topic := h.clienSideHandler.GetDataFromForm(c, "topic")
 	roomID := c.Param("roomID")
+	p := c.Param("players")
+
+	q := c.Param("questions")
+	players, err := strconv.Atoi(p)
+	if err != nil {
+		log.Println("error when getting players query :", err)
+		return
+	}
+	numberOfQuestions, err := strconv.Atoi(q)
+	if err != nil {
+		log.Println("error when getting questions query :", err)
+		return
+	}
 	//find question with this topic
 	log.Println("topic : ", topic)
-
+	questions, err := h.gameStore.GetQuestionsByTopicName(topic)
+	if err != nil {
+		log.Println("error when getting question from db by topic : ", err)
+		return
+	}
+	log.Println("questions : ", questions)
+	globalRoomManager.CreateRoom(roomID, players, numberOfQuestions, questions)
 	url := fmt.Sprintf("/game/%s", roomID)
 	c.Writer.Header().Add("HX-Redirect", url)
 	//redirect to game handler : /game/:roomID
 }
 
-func (h *GameHandler) HandleGame(c *gin.Context) {
+func (h *gameHandler) HandleGame(c *gin.Context) {
 	roomID := c.Param("roomID")
 	game.Game(roomID).Render(c.Request.Context(), c.Writer)
 }
 
-func (h *GameHandler) HandleWSConnectionForGame(c *gin.Context) {
+func (h *gameHandler) HandleWSConnectionForGame(c *gin.Context) {
 	roomID := c.Param("roomID")
 	log.Println("room id : ", roomID)
 	manager, exists := globalRoomManager.GetManager(roomID)
@@ -90,12 +115,12 @@ func (h *GameHandler) HandleWSConnectionForGame(c *gin.Context) {
 	manager.NewConnection(c)
 }
 
-func (h *GameHandler) LoadTemplConnectToRoom(c *gin.Context) {
+func (h *gameHandler) LoadTemplConnectToRoom(c *gin.Context) {
 	comp := room.LoadConnectionToRoom("")
 	comp.Render(c.Request.Context(), c.Writer)
 
 }
-func (h *GameHandler) ConfirmConnectionToRoom(c *gin.Context) {
+func (h *gameHandler) ConfirmConnectionToRoom(c *gin.Context) {
 	//get data from form
 	roomID := h.clienSideHandler.GetDataFromForm(c, "code")
 	_, ok := globalRoomManager.GetManager(roomID)
@@ -108,11 +133,11 @@ func (h *GameHandler) ConfirmConnectionToRoom(c *gin.Context) {
 	c.Writer.Header().Add("HX-Redirect", url)
 }
 
-func (h *GameHandler) LoadTemplCreateRoom(c *gin.Context) {
+func (h *gameHandler) LoadTemplCreateRoom(c *gin.Context) {
 	comp := room.LoadCreationOfRoom()
 	comp.Render(context.Background(), c.Writer)
 }
-func (h *GameHandler) ConfirmCreationOfRoom(c *gin.Context) {
+func (h *gameHandler) ConfirmCreationOfRoom(c *gin.Context) {
 
 	//read data about room from form
 
@@ -123,19 +148,20 @@ func (h *GameHandler) ConfirmCreationOfRoom(c *gin.Context) {
 	amountOfQuestions := h.clienSideHandler.GetDataFromForm(c, "questions")
 	log.Println("number of players :", numberOfPlayers)
 	log.Println("ramountOfQuestions : ", amountOfQuestions)
-
-	roomID := globalRoomManager.CreateRoom()
+	b := make([]byte, 6)
+	rand.Read(b)
+	roomID := base64.StdEncoding.EncodeToString(b)
 
 	//create cookie for connection secure
-	url := fmt.Sprintf("/game/%s/info", roomID)
+	url := fmt.Sprintf("/game/%s/info/%s/%s", roomID, numberOfPlayers, amountOfQuestions)
 	c.Writer.Header().Add("HX-Redirect", url)
 }
 
-func (h *GameHandler) LoadTopicCreation(c *gin.Context) {
+func (h *gameHandler) LoadTopicCreation(c *gin.Context) {
 	comp := topic.LoadCreateTopic()
 	comp.Render(context.Background(), c.Writer)
 }
-func (h *GameHandler) ConfirmTopicCreation(c *gin.Context) {
+func (h *gameHandler) ConfirmTopicCreation(c *gin.Context) {
 	id := uuid.NewString()
 	name := h.clienSideHandler.GetDataFromForm(c, "name")
 	number := h.clienSideHandler.GetDataFromForm(c, "number")
@@ -144,7 +170,7 @@ func (h *GameHandler) ConfirmTopicCreation(c *gin.Context) {
 	c.Writer.Header().Add("HX-Redirect", url)
 }
 
-func (h *GameHandler) LoadCreationOfQuestions(c *gin.Context) {
+func (h *gameHandler) LoadCreationOfQuestions(c *gin.Context) {
 
 	topicID := c.Param("topicID")
 	name := c.Param("name")
@@ -157,7 +183,7 @@ func (h *GameHandler) LoadCreationOfQuestions(c *gin.Context) {
 	comp.Render(context.Background(), c.Writer)
 }
 
-func (h *GameHandler) ConfirmCreationOfQuestion(c *gin.Context) {
+func (h *gameHandler) ConfirmCreationOfQuestion(c *gin.Context) {
 	var questions []types.Question
 
 	var topic types.Topic
@@ -182,7 +208,14 @@ func (h *GameHandler) ConfirmCreationOfQuestion(c *gin.Context) {
 		q.Answers[1] = h.clienSideHandler.GetDataFromForm(c, fmt.Sprintf("a-2-%d", i))
 		q.Answers[2] = h.clienSideHandler.GetDataFromForm(c, fmt.Sprintf("a-3-%d", i))
 		q.Answers[3] = h.clienSideHandler.GetDataFromForm(c, fmt.Sprintf("a-4-%d", i))
-		q.CorrectAnswer = h.clienSideHandler.GetDataFromForm(c, fmt.Sprintf("correctA-%d", i))
+		ca := h.clienSideHandler.GetDataFromForm(c, fmt.Sprintf("correctA-%d", i))
+		n, err := strconv.Atoi(ca)
+		if err != nil {
+			log.Println("error when converting correct answer :", err)
+			return
+		}
+		n = n - 1
+		q.CorrectAnswer = q.Answers[n]
 		image := h.clienSideHandler.GetDataFromForm(c, fmt.Sprintf("image-%d", i))
 		if image == "" {
 			q.Type = "text"
