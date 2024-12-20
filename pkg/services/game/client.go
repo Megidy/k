@@ -46,19 +46,19 @@ func (c *Client) ReadPump() {
 		c.conn.Close()
 		c.manager.DeleteClientFromConnectionPool(c)
 	}()
-	c.conn.SetReadLimit(maxMessageSize)
-	c.conn.SetReadDeadline(time.Now().Add(pongWait))
-	c.conn.SetPongHandler(func(string) error {
-		c.conn.SetReadDeadline(time.Now().Add(pongWait))
-		log.Println("error when setting pong handler with client : ", c.ID)
-		return nil
-	})
+	// c.conn.SetReadLimit(maxMessageSize)
+	// c.conn.SetReadDeadline(time.Now().Add(pongWait))
+	// c.conn.SetPongHandler(func(string) error {
+	// 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
+	// 	log.Println("error when setting pong handler with client : ", c.ID)
+	// 	return nil
+	// })
 
 	for {
 		_, txt, err := c.conn.ReadMessage()
 		if err != nil {
 			log.Println("error while reading data : ", txt)
-			return
+			break
 		}
 		var data interface{}
 		json.Unmarshal(txt, &data)
@@ -75,10 +75,8 @@ func (c *Client) ReadPump() {
 }
 
 func (c *Client) WritePump() {
-	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		c.conn.Close()
-		ticker.Stop()
 		c.manager.DeleteClientFromConnectionPool(c)
 
 	}()
@@ -99,13 +97,8 @@ func (c *Client) WritePump() {
 
 			err := c.conn.WriteMessage(websocket.TextMessage, buffer.Bytes())
 			if err != nil {
-				log.Println("error when writing message to the client: ", err)
-			}
-		case <-ticker.C:
-			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
-			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				log.Println("disconnected client with id : ", c.ID)
-				return
+				log.Println("error when writing message: ", err)
+
 			}
 		}
 
