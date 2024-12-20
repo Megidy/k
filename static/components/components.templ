@@ -1,18 +1,70 @@
 package components
 
-import "github.com/Megidy/k/types"
-import "fmt"
-
+import (
+	"fmt"
+	"github.com/Megidy/k/types"
+)
 
 templ Question(question types.Question) {
 	<div hx-swap-oob="innerHTML:#game">
 		<p>{ question.Question }</p>
-        <form id="form" ws-send>
-            for index,answer:=range question.Answers{
-                <input type="radio" id={fmt.Sprintf("%d",index)}name={question.Id} value={answer}>
-                <label for={fmt.Sprintf("%d",index)}> {answer}</label><br>
-            }
-            <button type="submit">submit</button>
-        </form>
+		if question.Type=="image"{
+			<img src={question.ImageLink}>
+		}
+		<form id="sendingQuestionForm" ws-send>
+			for index,answer:=range question.Answers {
+				<input type="radio" id={ fmt.Sprintf("%d", index) } name={ question.Id } value={ answer } required/>
+				<label for={ fmt.Sprintf("%d", index) }>{ answer }</label>
+				<br/>
+			}
+			<button type="submit">submit</button>
+		</form>
+	</div>
+}
+
+templ CreateQuestion(number int) {
+	<div id={ fmt.Sprintf("question-%d", number) }>
+		<div>
+			question number { fmt.Sprintf("%d",number+1) }
+			<br/>
+			<label for={ fmt.Sprintf("%d", number) }>Question:</label>
+			<br/>
+			<input type="text" id={ fmt.Sprintf("name-%d", number) } name={ fmt.Sprintf("name-%d", number) } required/>
+			<br/>
+		</div>
+		<div>
+			<label>Answers:</label>
+			<br/>
+			1 answer <input type="text" id={ fmt.Sprintf("a-1-%d", number) } name={ fmt.Sprintf("a-1-%d", number) } required/>
+			<br/>
+			2 answer :<input type="text" id={ fmt.Sprintf("a-2-%d", number) } name={ fmt.Sprintf("a-2-%d", number) } required/>
+			<br/>
+			3 answer :<input type="text" id={ fmt.Sprintf("a-3-%d", number) } name={ fmt.Sprintf("a-3-%d", number) } required/>
+			<br/>
+			4 answer :<input type="text" id={ fmt.Sprintf("a-4-%d", number) } name={ fmt.Sprintf("a-4-%d", number) } required/>
+			<br/>
+		</div>
+		<div>
+			<label>Correct Answer is :</label>
+			<br/>
+			<input type="number" id={ fmt.Sprintf("correctA-%d", number) } name={ fmt.Sprintf("correctA-%d", number) } min="1" max="4"/>
+			<br/>
+		</div>
+		<br/>
+		<div>
+			<label>Image (not necessary , only link)</label>
+			<br/>
+			<input type="text" id={ fmt.Sprintf("image-%d", number) } name={ fmt.Sprintf("image-%d", number) }/>
+			<br/>
+			<br/>
+		</div>
+	</div>
+}
+
+templ Topics(topic types.Topic) {
+	<div>
+		<input type="radio" id={ fmt.Sprintf("%s", topic.Name) } name="topic" value={ fmt.Sprintf("%s", topic.Name) }/>
+		<label for={ fmt.Sprintf("%s", topic.Name) }>{ topic.Name }</label>
+		<br/>
 	</div>
 }
