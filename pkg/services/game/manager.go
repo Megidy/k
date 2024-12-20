@@ -20,14 +20,13 @@ var upgrader = websocket.Upgrader{
 
 // implement not with the sleep but with the members passsed the current question
 type Manager struct {
-	//number of members
-
-	//number of questions
-	//questions
-
+	//unique of room
 	roomID string
-
-	mu sync.Mutex
+	//number of members
+	numberOfPlayers int
+	//number of questions
+	numberOfQuestions int
+	mu                sync.Mutex
 	//points score
 	points map[*Client]int
 	//map of all clients
@@ -43,43 +42,20 @@ type Manager struct {
 	accessCh chan bool
 }
 
-func NewManager(id string) *Manager {
+func NewManager(id string, numberOfPlayers, amountOfQuestions int, questions []types.Question) *Manager {
 	manager := &Manager{
-		roomID:    id,
-		mu:        sync.Mutex{},
-		points:    make(map[*Client]int),
-		clients:   make(map[*Client]bool),
-		done:      make(map[*Client]bool),
-		broadcast: make(chan types.Question),
-		doneCh:    make(chan bool, 1),
-		accessCh:  make(chan bool),
-		questions: []types.Question{
-			{
-				Id:            uuid.NewString(),
-				Question:      "What is the capital of France?",
-				Answers:       []string{"A. Berlin", "B. Madrid", "C. Paris", "D. Rome"},
-				CorrectAnswer: "C",
-			},
-			{
-				Id:            uuid.NewString(),
-				Question:      "Which programming language is known as the backbone of the web?",
-				Answers:       []string{"A. Python", "B. JavaScript", "C. Go", "D. Ruby"},
-				CorrectAnswer: "B",
-			},
-			{
-				Id:            uuid.NewString(),
-				Question:      "What is the smallest prime number?",
-				Answers:       []string{"A. 0", "B. 1", "C. 2", "D. 3"},
-				CorrectAnswer: "C",
-			},
-			{
-				Id:            uuid.NewString(),
-				Question:      "Which planet is known as the Red Planet?",
-				Answers:       []string{"A. Earth", "B. Mars", "C. Jupiter", "D. Venus"},
-				CorrectAnswer: "B",
-			},
-		},
-		currQuestion: 0,
+		roomID:            id,
+		numberOfPlayers:   numberOfPlayers,
+		numberOfQuestions: amountOfQuestions,
+		mu:                sync.Mutex{},
+		points:            make(map[*Client]int),
+		clients:           make(map[*Client]bool),
+		done:              make(map[*Client]bool),
+		broadcast:         make(chan types.Question),
+		doneCh:            make(chan bool, 1),
+		accessCh:          make(chan bool),
+		questions:         questions,
+		currQuestion:      0,
 	}
 	go manager.MessageQueue()
 	go manager.CheckReadiness()
@@ -132,14 +108,14 @@ func (m *Manager) MessageQueue() {
 				log.Println("failed to read from doneCh : message queue")
 				return
 			}
-			if m.currQuestion < 4 {
+			if m.currQuestion < m.numberOfQuestions {
 
 				if done {
 					m.currQuestion++
 				}
 
 			}
-			if m.currQuestion == 4 {
+			if m.currQuestion == m.numberOfQuestions {
 				m.currQuestion = 0
 			}
 		default:
@@ -201,7 +177,7 @@ func (m *Manager) SetClientsInReadiness() {
 
 func (m *Manager) StartGame() {
 	for {
-		if len(m.clients) == 2 {
+		if len(m.clients) == m.numberOfPlayers {
 			m.accessCh <- true
 			close(m.accessCh)
 			return
