@@ -1,0 +1,35 @@
+package user
+
+templ Signup(message string) {
+	<div class="signUpClass">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Sign Up</title>
+			<script src="https://unpkg.com/htmx.org@1.9.2"></script>
+		</head>
+		<body>
+			<div class="signup">
+				<form hx-post="/account/create/confirm" hx-swap="outerHTML" hx-target=".signUpClass">
+					<div class="form-group">
+						<label for="username">Your User Name:</label>
+						<input type="text" id="username" name="username" required/>
+					</div>
+					<div class="form-group">
+						<label for="email">your Email:</label>
+						<input type="email" id="email" name="email" required/>
+					</div>
+					<div class="form-group">
+						<label for="password">your super-puper secret Password:</label>
+						<input type="password" id="password" name="password" required/>
+					</div>
+					<button type="submit" class="btn">Sign Up</button>
+					<div><a href="/account/login">Already have an account?</a><br/></div>
+					<div class="message">
+						{ message }
+					</div>
+				</form>
+			</div>
+		</body>
+	</div>
+}
