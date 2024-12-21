@@ -74,9 +74,9 @@ func CreateJWT(secret []byte, userId string) (string, error) {
 
 func RedirectToLogin(c *gin.Context) {
 	if c.Request.Method == http.MethodPost {
-		c.Writer.Header().Add("HX-Redirect", "/login")
+		c.Writer.Header().Add("HX-Redirect", "/account/login")
 	} else {
-		c.Redirect(http.StatusFound, "/login")
+		c.Redirect(http.StatusFound, "/account/login")
 		c.Abort()
 	}
 
