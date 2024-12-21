@@ -18,58 +18,50 @@ const (
 	writeWait = 10 * time.Second
 
 	// Time allowed to read the next pong message from the peer.
-	pongWait = 30 * time.Second
+	pongWait = 5 * time.Second
 
 	// Send pings to peer with this period. Must be less than pongWait.
-	pingPeriod = (30 * time.Second * 9) / 10
+	pingPeriod = 1 * time.Second
 
 	// Maximum message size allowed from peer.
 	maxMessageSize = 512
 )
 
 type Client struct {
-	ctx      *gin.Context
+	ginCtx   *gin.Context
 	userName string
 	conn     *websocket.Conn
 	manager  *Manager
 	question types.Question
-	exitCh   chan bool
+	exitCh   chan struct{}
 }
 
-func NewClient(userName string, conn *websocket.Conn, manager *Manager, c *gin.Context) *Client {
+func NewClient(userName string, conn *websocket.Conn, manager *Manager, ctx *gin.Context) *Client {
 
 	return &Client{
-		ctx:      c,
+		ginCtx:   ctx,
 		userName: userName,
 		conn:     conn,
 		manager:  manager,
-		exitCh:   make(chan bool),
+		exitCh:   make(chan struct{}),
 	}
 }
 
 func (c *Client) ReadPump() {
 	defer func() {
-		c.exitCh <- true
-		log.Println("exited readpump goroutine of client: ", c.userName)
-		c.conn.Close()
+		log.Println("READ PUMP : exited readpump goroutine of client: ", c.userName)
 		close(c.exitCh)
 		c.manager.DeleteClientFromConnectionPool(c)
 	}()
-	// c.conn.SetReadLimit(maxMessageSize)
-	// c.conn.SetReadDeadline(time.Now().Add(pongWait))
-	// c.conn.SetPongHandler(func(string) error {
-	// 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
-	// 	log.Println("error when setting pong handler with client : ", c.ID)
-	// 	return nil
-	// })
-
 	for {
 		_, txt, err := c.conn.ReadMessage()
 		if err != nil {
-			log.Println("error while reading data : ", txt)
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				log.Printf("error: %v", err)
+			}
 			break
 		}
-		var data interface{}
+		var data types.RequestData
 		json.Unmarshal(txt, &data)
 		log.Println("data : ", data)
 		//score of points
@@ -85,18 +77,35 @@ func (c *Client) ReadPump() {
 
 func (c *Client) WritePump() {
 	defer func() {
-		log.Println("exited writepump goroutine of client: ", c.userName)
+		log.Println("WRITE PUMP : exited writepump goroutine of client: ", c.userName)
 
 	}()
 	for {
 		select {
+		case <-c.manager.ctx.Done():
+			c.conn.Close()
+			return
 		case q, ok := <-c.manager.broadcast:
+			if !ok {
+				log.Println("channel closed while writing to user")
+				return
+			}
 			if q.Id == c.question.Id {
 				continue
 			}
-			if !ok {
-				log.Println("channel closed while writing to user")
+			if q.Id == "ID-leaderBoard" {
+				comp := components.LeaderBoard()
+				buffer := &bytes.Buffer{}
+				comp.Render(context.Background(), buffer)
+
+				err := c.conn.WriteMessage(websocket.TextMessage, buffer.Bytes())
+				if err != nil {
+					log.Println("error when writing message: ", err)
+
+				}
+				continue
 			}
+
 			c.question = q
 			log.Println("currenct question : ", q)
 			comp := components.Question(q)
@@ -108,24 +117,9 @@ func (c *Client) WritePump() {
 				log.Println("error when writing message: ", err)
 
 			}
-		case <-c.exitCh:
-			return
+
 		}
 
 	}
 
 }
-
-// for {
-// 	q := types.Question{
-// 		Question:      "how old am I?",
-// 		Answers:       []string{"16", "17", "18", "19"},
-// 		CorrectAnswer: "18",
-// 	}
-
-//		log.Println("readed message : ", q.Question)
-//		time.Sleep(time.Second * 2)
-//	}
-// func (c *Client) GetDataFromForm(ctx *gin.Context, key string) string {
-// 	return c.Request.PostFormValue(key)
-// }
