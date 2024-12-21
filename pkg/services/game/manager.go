@@ -1,6 +1,7 @@
 package game
 
 import (
+	"context"
 	"log"
 	"sync"
 
@@ -31,7 +32,12 @@ type Manager struct {
 	numberOfPlayers int
 	//number of questions
 	numberOfQuestions int
-	mu                sync.Mutex
+	//mutex for concurenct safe reading and writing
+	mu sync.Mutex
+	//context
+	ctx context.Context
+	//cancel func
+	cancel context.CancelFunc
 	//points score
 	usernames map[string]bool
 	points    map[*Client]int
@@ -49,11 +55,15 @@ type Manager struct {
 }
 
 func NewManager(id string, numberOfPlayers, amountOfQuestions int, questions []types.Question) *Manager {
+	ctx, cancel := context.WithCancel(context.Background())
+
 	manager := &Manager{
 		roomID:            id,
 		numberOfPlayers:   numberOfPlayers,
 		numberOfQuestions: amountOfQuestions,
 		mu:                sync.Mutex{},
+		ctx:               ctx,
+		cancel:            cancel,
 		points:            make(map[*Client]int),
 		clients:           make(map[*Client]bool),
 		done:              make(map[*Client]bool),
@@ -66,7 +76,6 @@ func NewManager(id string, numberOfPlayers, amountOfQuestions int, questions []t
 	}
 	go manager.MessageQueue()
 	go manager.CheckReadiness()
-	go manager.SetClientsInReadiness()
 	go manager.StartGame()
 	return manager
 }
@@ -79,9 +88,13 @@ func (m *Manager) CheckDuplicates(client *Client) bool {
 func (m *Manager) AddClientToConnectionPool(client *Client) {
 
 	m.mu.Lock()
+	_, ok := m.points[client]
+	if !ok {
+		m.points[client] = 0
+	}
 	m.usernames[client.userName] = true
 	m.clients[client] = true
-	m.points[client] = 0
+	m.done[client] = false
 	m.mu.Unlock()
 	log.Println("added new client with: ", client)
 	log.Println("currenct pool of connection: ", m.clients)
@@ -91,6 +104,7 @@ func (m *Manager) DeleteClientFromConnectionPool(client *Client) {
 	m.mu.Lock()
 	delete(m.usernames, client.userName)
 	delete(m.clients, client)
+	delete(m.done, client)
 	log.Println("deleted connection from pool ", client)
 	log.Println("current connections : ", m.clients)
 	m.mu.Unlock()
@@ -106,11 +120,12 @@ func (m *Manager) NewConnection(c *gin.Context) {
 		log.Println("error while creating websocket connection : ", err)
 		return
 	}
+
+	// checking if user with this
+	// if m.CheckDuplicates(&Client{userName: user.UserName}) {
+	// 	return
+	// }
 	client := NewClient(user.UserName, wsConn, m, c)
-	//checking if user with this
-	if m.CheckDuplicates(client) {
-		return
-	}
 	m.AddClientToConnectionPool(client)
 	<-m.accessCh
 	go client.WritePump()
@@ -118,16 +133,20 @@ func (m *Manager) NewConnection(c *gin.Context) {
 }
 
 func (m *Manager) MessageQueue() {
+	defer func() {
+		log.Println("MESSAGE QUEUE: exited from goroutine")
+	}()
 	for {
 		select {
 		case done, ok := <-m.doneCh:
 			if !ok {
-				log.Println("failed to read from doneCh : message queue")
+				log.Println("MESSAGE QUEUE: failed to read from doneCh : message queue")
 				return
 			}
 			if m.currQuestion < m.numberOfQuestions {
 				if done {
 					m.currQuestion++
+
 				}
 
 			}
@@ -136,12 +155,17 @@ func (m *Manager) MessageQueue() {
 					Id:       "ID-leaderBoard",
 					Question: "leaderboard",
 				}
-				for {
-
-					for range m.clients {
-						m.broadcast <- doneQuestion
-					}
+				m.mu.Lock()
+				for i := 0; i < len(m.clients)*10; i++ {
+					m.broadcast <- doneQuestion
 				}
+
+				m.mu.Unlock()
+				m.cancel()
+
+				close(m.broadcast)
+				return
+
 			}
 		default:
 			m.broadcast <- m.questions[m.currQuestion]
@@ -152,52 +176,43 @@ func (m *Manager) MessageQueue() {
 }
 
 func (m *Manager) CheckReadiness() {
-	for {
-		var count int
-		var check int
-		m.mu.Lock()
-		count = len(m.clients)
-		m.mu.Unlock()
-		if count == 0 {
-			continue
-		}
-		m.mu.Lock()
-		for _, ready := range m.done {
-			if ready {
-				check++
-			}
-			// log.Println("count :", count)
-			// log.Println("check :", check)
 
-			if count == check {
-				for k := range m.done {
-					m.done[k] = false
+	for {
+		select {
+		case <-m.ctx.Done():
+			log.Println("CHECK READINESS : exited goroutine via ctx")
+			close(m.doneCh)
+			return
+		default:
+			var count int
+			var check int
+			m.mu.Lock()
+			count = len(m.clients)
+			m.mu.Unlock()
+			if count == 0 {
+				continue
+			}
+			m.mu.Lock()
+			for _, ready := range m.done {
+				if ready {
+					check++
 				}
-				m.doneCh <- true
+				// log.Println("count :", count)
+				// log.Println("check :", check)
+
+				if count == check {
+					for k := range m.done {
+						m.done[k] = false
+					}
+					m.doneCh <- true
+				}
 			}
-		}
-		m.mu.Unlock()
-		check = 0
-
-	}
-}
-
-func (m *Manager) SetClientsInReadiness() {
-	for {
-		m.mu.Lock()
-		for c := range m.clients {
-
-			_, ok := m.done[c]
-			if !ok {
-				m.done[c] = false
-
-			}
+			m.mu.Unlock()
+			check = 0
 
 		}
-		m.mu.Unlock()
 
 	}
-
 }
 
 func (m *Manager) StartGame() {
