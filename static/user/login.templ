@@ -1,0 +1,31 @@
+package user
+
+templ Login(message string) {
+	<div class="loginClassSwap">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Log In</title>
+			<script src="https://unpkg.com/htmx.org@1.9.2"></script>
+		</head>
+		<body>
+			<div class="login" id="loginform">
+				<form hx-post="/account/login/confirm" hx-swap="outerHTML" hx-target=".loginClassSwap">
+					<div class="form-group">
+						<label for="email">Your Email:</label>
+						<input type="email" id="email" name="email" required/>
+					</div>
+					<div class="form-group">
+						<label for="password">Your Password:</label>
+						<input type="password" id="password" name="password" required/>
+					</div>
+					<button type="submit" class="btn">Log In</button>
+					<div><a href="/account/create" class="link">Dont have account yet?</a>.<br/></div>
+					<div class="message">
+						{ message }
+					</div>
+				</form>
+			</div>
+		</body>
+	</div>
+}
