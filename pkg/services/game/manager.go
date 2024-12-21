@@ -6,7 +6,6 @@ import (
 
 	"github.com/Megidy/k/types"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -18,17 +17,24 @@ var upgrader = websocket.Upgrader{
 	// },
 }
 
+//TO DO :
+
+//!!!! make password !!
+
 // implement not with the sleep but with the members passsed the current question
 type Manager struct {
+
 	//unique of room
 	roomID string
+
 	//number of members
 	numberOfPlayers int
 	//number of questions
 	numberOfQuestions int
 	mu                sync.Mutex
 	//points score
-	points map[*Client]int
+	usernames map[string]bool
+	points    map[*Client]int
 	//map of all clients
 	clients map[*Client]bool
 	//question
@@ -51,6 +57,7 @@ func NewManager(id string, numberOfPlayers, amountOfQuestions int, questions []t
 		points:            make(map[*Client]int),
 		clients:           make(map[*Client]bool),
 		done:              make(map[*Client]bool),
+		usernames:         make(map[string]bool),
 		broadcast:         make(chan types.Question),
 		doneCh:            make(chan bool, 1),
 		accessCh:          make(chan bool),
@@ -64,36 +71,46 @@ func NewManager(id string, numberOfPlayers, amountOfQuestions int, questions []t
 	return manager
 }
 
-// func FindManagerOfGame(id string)
-func (m *Manager) AddClientToConnectionPool(client *Client) error {
+func (m *Manager) CheckDuplicates(client *Client) bool {
+	_, ok := m.usernames[client.userName]
+	return ok
+}
+
+func (m *Manager) AddClientToConnectionPool(client *Client) {
 
 	m.mu.Lock()
+	m.usernames[client.userName] = true
 	m.clients[client] = true
 	m.points[client] = 0
 	m.mu.Unlock()
 	log.Println("added new client with: ", client)
 	log.Println("currenct pool of connection: ", m.clients)
 
-	return nil
 }
-func (m *Manager) DeleteClientFromConnectionPool(client *Client) error {
+func (m *Manager) DeleteClientFromConnectionPool(client *Client) {
 	m.mu.Lock()
+	delete(m.usernames, client.userName)
 	delete(m.clients, client)
 	log.Println("deleted connection from pool ", client)
 	log.Println("current connections : ", m.clients)
 	m.mu.Unlock()
-	return nil
 }
 
 // implement function start the game
 func (m *Manager) NewConnection(c *gin.Context) {
+	u, _ := c.Get("user")
+	user := u.(*types.User)
 
 	wsConn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Println("error while creating websocket connection : ", err)
 		return
 	}
-	client := NewClient(uuid.NewString(), wsConn, m)
+	client := NewClient(user.UserName, wsConn, m, c)
+	//checking if user with this
+	if m.CheckDuplicates(client) {
+		return
+	}
 	m.AddClientToConnectionPool(client)
 	<-m.accessCh
 	go client.WritePump()
@@ -109,14 +126,22 @@ func (m *Manager) MessageQueue() {
 				return
 			}
 			if m.currQuestion < m.numberOfQuestions {
-
 				if done {
 					m.currQuestion++
 				}
 
 			}
 			if m.currQuestion == m.numberOfQuestions {
-				m.currQuestion = 0
+				doneQuestion := types.Question{
+					Id:       "ID-leaderBoard",
+					Question: "leaderboard",
+				}
+				for {
+
+					for range m.clients {
+						m.broadcast <- doneQuestion
+					}
+				}
 			}
 		default:
 			m.broadcast <- m.questions[m.currQuestion]
