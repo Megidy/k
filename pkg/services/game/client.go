@@ -31,6 +31,7 @@ type Client struct {
 	conn     *websocket.Conn
 	manager  *Manager
 	question types.Question
+	exitCh   chan bool
 }
 
 func NewClient(id string, conn *websocket.Conn, manager *Manager) *Client {
@@ -38,12 +39,16 @@ func NewClient(id string, conn *websocket.Conn, manager *Manager) *Client {
 		ID:      id,
 		conn:    conn,
 		manager: manager,
+		exitCh:  make(chan bool),
 	}
 }
 
 func (c *Client) ReadPump() {
 	defer func() {
+		c.exitCh <- true
+		log.Println("exited readpump goroutine of client: ", c.ID)
 		c.conn.Close()
+		close(c.exitCh)
 		c.manager.DeleteClientFromConnectionPool(c)
 	}()
 	// c.conn.SetReadLimit(maxMessageSize)
@@ -76,8 +81,7 @@ func (c *Client) ReadPump() {
 
 func (c *Client) WritePump() {
 	defer func() {
-		c.conn.Close()
-		c.manager.DeleteClientFromConnectionPool(c)
+		log.Println("exited writepump goroutine of client: ", c.ID)
 
 	}()
 	for {
@@ -100,6 +104,8 @@ func (c *Client) WritePump() {
 				log.Println("error when writing message: ", err)
 
 			}
+		case <-c.exitCh:
+			return
 		}
 
 	}
