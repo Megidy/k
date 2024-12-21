@@ -38,4 +38,7 @@ type GameStore interface {
 }
 type UserStore interface {
 	GetUserById(id string) (*User, error)
+	CreateUser(user *User) error
+	UserExists(user *User) (bool, error)
+	GetUserByEmail(email string) (*User, error)
 }
