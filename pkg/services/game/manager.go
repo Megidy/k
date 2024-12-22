@@ -40,7 +40,7 @@ type Manager struct {
 	cancel context.CancelFunc
 	//points score
 	usernames map[string]bool
-	points    map[*Client]int
+	points    map[string]int
 	//map of all clients
 	clients map[*Client]bool
 	//question
@@ -64,7 +64,7 @@ func NewManager(id string, numberOfPlayers, amountOfQuestions int, questions []t
 		mu:                sync.Mutex{},
 		ctx:               ctx,
 		cancel:            cancel,
-		points:            make(map[*Client]int),
+		points:            make(map[string]int),
 		clients:           make(map[*Client]bool),
 		done:              make(map[*Client]bool),
 		usernames:         make(map[string]bool),
@@ -88,9 +88,9 @@ func (m *Manager) CheckDuplicates(client *Client) bool {
 func (m *Manager) AddClientToConnectionPool(client *Client) {
 
 	m.mu.Lock()
-	_, ok := m.points[client]
+	_, ok := m.points[client.userName]
 	if !ok {
-		m.points[client] = 0
+		m.points[client.userName] = 0
 	}
 	m.usernames[client.userName] = true
 	m.clients[client] = true
