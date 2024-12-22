@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/Megidy/k/types"
 	"github.com/gin-gonic/gin"
@@ -22,12 +23,17 @@ var upgrader = websocket.Upgrader{
 
 //!!!! make password !!
 
+//overwrite check readiness not with map of ready clients but as a channel sent events :
+//1 : client answering
+//2 : submiting score
+//3 : sending event to the doneCh
+//4 : if count==len(m.clients) than currQuestion++ && count=0
+//5 : count++
+
 // implement not with the sleep but with the members passsed the current question
 type Manager struct {
-
-	//unique of room
+	//unique ID of room
 	roomID string
-
 	//number of members
 	numberOfPlayers int
 	//number of questions
@@ -36,20 +42,26 @@ type Manager struct {
 	mu sync.Mutex
 	//context
 	ctx context.Context
-	//cancel func
+	//cancel func of context
 	cancel context.CancelFunc
-	//points score
+	//map of usernames
 	usernames map[string]bool
-	points    map[string]int
+	//points score
+	points map[string]int
 	//map of all clients
 	clients map[*Client]bool
-	//question
+	//number of current question
 	currQuestion int
-	questions    []types.Question
-	broadcast    chan types.Question
+	//slice of current questions
+	questions []types.Question
+	//chan to broadcast questions to all users
+	broadcast chan types.Question
 	//doneCh to comunicate with message queue
 	doneCh chan bool
-	done   map[*Client]bool
+	//donemap to write clients who is done and who is not
+	doneMap map[*Client]bool
+	//chan to send to curr client that havent answered to the question yet
+	doneWaitCh chan []string
 	//accessCh to start game
 	accessCh chan bool
 }
@@ -66,18 +78,29 @@ func NewManager(id string, numberOfPlayers, amountOfQuestions int, questions []t
 		cancel:            cancel,
 		points:            make(map[string]int),
 		clients:           make(map[*Client]bool),
-		done:              make(map[*Client]bool),
+		doneMap:           make(map[*Client]bool),
 		usernames:         make(map[string]bool),
 		broadcast:         make(chan types.Question),
 		doneCh:            make(chan bool, 1),
 		accessCh:          make(chan bool),
+		doneWaitCh:        make(chan []string),
 		questions:         questions,
 		currQuestion:      0,
 	}
 	go manager.MessageQueue()
 	go manager.CheckReadiness()
 	go manager.StartGame()
+
 	return manager
+}
+
+func (m *Manager) HandlePointScoreness(client *Client, requestData types.RequestData) {
+	if requestData.Answer == client.question.CorrectAnswer {
+		m.mu.Lock()
+		m.points[client.userName]++
+		m.mu.Unlock()
+	}
+
 }
 
 func (m *Manager) CheckDuplicates(client *Client) bool {
@@ -94,17 +117,17 @@ func (m *Manager) AddClientToConnectionPool(client *Client) {
 	}
 	m.usernames[client.userName] = true
 	m.clients[client] = true
-	m.done[client] = false
+	m.doneMap[client] = false
 	m.mu.Unlock()
 	log.Println("added new client with: ", client)
 	log.Println("currenct pool of connection: ", m.clients)
-
 }
+
 func (m *Manager) DeleteClientFromConnectionPool(client *Client) {
 	m.mu.Lock()
 	delete(m.usernames, client.userName)
 	delete(m.clients, client)
-	delete(m.done, client)
+	delete(m.doneMap, client)
 	log.Println("deleted connection from pool ", client)
 	log.Println("current connections : ", m.clients)
 	m.mu.Unlock()
@@ -114,13 +137,11 @@ func (m *Manager) DeleteClientFromConnectionPool(client *Client) {
 func (m *Manager) NewConnection(c *gin.Context) {
 	u, _ := c.Get("user")
 	user := u.(*types.User)
-
 	wsConn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Println("error while creating websocket connection : ", err)
 		return
 	}
-
 	// checking if user with this
 	// if m.CheckDuplicates(&Client{userName: user.UserName}) {
 	// 	return
@@ -137,6 +158,7 @@ func (m *Manager) MessageQueue() {
 		log.Println("MESSAGE QUEUE: exited from goroutine")
 	}()
 	for {
+		time.After(time.Second * 10)
 		select {
 		case done, ok := <-m.doneCh:
 			if !ok {
@@ -146,9 +168,7 @@ func (m *Manager) MessageQueue() {
 			if m.currQuestion < m.numberOfQuestions {
 				if done {
 					m.currQuestion++
-
 				}
-
 			}
 			if m.currQuestion == m.numberOfQuestions {
 				doneQuestion := types.Question{
@@ -159,13 +179,10 @@ func (m *Manager) MessageQueue() {
 				for i := 0; i < len(m.clients)*10; i++ {
 					m.broadcast <- doneQuestion
 				}
-
 				m.mu.Unlock()
 				m.cancel()
-
 				close(m.broadcast)
 				return
-
 			}
 		default:
 			m.broadcast <- m.questions[m.currQuestion]
@@ -193,21 +210,24 @@ func (m *Manager) CheckReadiness() {
 				continue
 			}
 			m.mu.Lock()
-			for _, ready := range m.done {
+			var list []string
+			for client, ready := range m.doneMap {
 				if ready {
 					check++
+
+				} else {
+					list = append(list, client.userName)
 				}
-				// log.Println("count :", count)
-				// log.Println("check :", check)
 
 				if count == check {
-					for k := range m.done {
-						m.done[k] = false
+					for k := range m.doneMap {
+						m.doneMap[k] = false
 					}
 					m.doneCh <- true
 				}
 			}
 			m.mu.Unlock()
+			m.doneWaitCh <- list
 			check = 0
 
 		}
@@ -215,9 +235,29 @@ func (m *Manager) CheckReadiness() {
 	}
 }
 
+func (m *Manager) WriteNotDoneUsers() {
+	for {
+		select {
+		case <-m.ctx.Done():
+
+		case list := <-m.doneWaitCh:
+			m.mu.Lock()
+			for client, ready := range m.doneMap {
+				if ready {
+					client.writeWaitCh <- list
+				}
+			}
+			m.mu.Unlock()
+		}
+
+	}
+
+}
+
 func (m *Manager) StartGame() {
 	for {
 		if len(m.clients) == m.numberOfPlayers {
+			go m.WriteNotDoneUsers()
 			m.accessCh <- true
 			close(m.accessCh)
 			return
