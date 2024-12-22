@@ -55,6 +55,7 @@ func (c *Client) ReadPump() {
 	}()
 	for {
 		_, txt, err := c.conn.ReadMessage()
+
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("error: %v", err)
@@ -62,14 +63,24 @@ func (c *Client) ReadPump() {
 			break
 		}
 		var data types.RequestData
+
+		// log.Println("data:", data)
+		// var data interface{}
 		json.Unmarshal(txt, &data)
-		log.Println("data : ", data)
+		log.Println("Data , headers : : ", data.Headers)
+		log.Println("Data , answer : : ", data.Answer)
+		if data.Answer == c.question.CorrectAnswer {
+			c.manager.mu.Lock()
+			c.manager.points[c.userName]++
+			c.manager.mu.Unlock()
+		}
 		//score of points
 		c.manager.mu.Lock()
 		log.Println("state of client ", c.userName, " before submit :", c.manager.done)
 		log.Println("client ", c.userName, ", is ready")
 		c.manager.done[c] = true
 		log.Println("state of client ", c.userName, " after submit :", c.manager.done)
+		log.Println("current score of ", c.userName, " :", c.manager.points[c.userName])
 		c.manager.mu.Unlock()
 	}
 
