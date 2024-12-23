@@ -22,9 +22,9 @@ type Question struct {
 	Answers       []string
 	CorrectAnswer string
 }
-type Message struct {
+type RequestData struct {
 	Headers map[string]any
-	Answer  map[string]string
+	Answer  string
 }
 
 type ClientSideHandler interface {
@@ -32,7 +32,7 @@ type ClientSideHandler interface {
 }
 
 type GameStore interface {
-	CreateTopic(questions []Question) error
+	CreateTopic(questions []Question, userID string) error
 	GetUsersTopics(userID string) ([]Topic, error)
 	GetQuestionsByTopicName(TopicName string) ([]Question, error)
 }
