@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/Megidy/k/types"
-	"github.com/google/uuid"
 )
 
 type store struct {
@@ -16,9 +15,9 @@ func NewGameStore(db *sql.DB) *store {
 	return &store{db: db}
 }
 
-func (s *store) CreateTopic(questions []types.Question) error {
+func (s *store) CreateTopic(questions []types.Question, userID string) error {
 	topic := questions[0].Topic
-	_, err := s.db.Exec("insert into topics values(?,?,?)", topic.TopicID, uuid.NewString(), topic.Name)
+	_, err := s.db.Exec("insert into topics values(?,?,?)", topic.TopicID, userID, topic.Name)
 	if err != nil {
 		log.Println("error occured in topics : ", err)
 		return err
