@@ -8,18 +8,47 @@ import (
 templ Question(question types.Question) {
 	<div hx-swap-oob="innerHTML:#game">
 		<p>{ question.Question }</p>
-		if question.Type=="image"{
-			<img src={question.ImageLink}>
+		if question.Type=="image" {
+			<img src={ question.ImageLink }/>
 		}
 		<form id="sendingQuestionForm" ws-send>
 			for index,answer:=range question.Answers {
-				<input type="radio" id={ fmt.Sprintf("%d", index) } name={ question.Id } value={ answer } required/>
+				<input type="radio" id="answer" name="answer" value={ answer } required/>
 				<label for={ fmt.Sprintf("%d", index) }>{ answer }</label>
 				<br/>
 			}
 			<button type="submit">submit</button>
 		</form>
 	</div>
+}
+
+templ LeaderBoard(...any) {
+	<div hx-swap-oob="innerHTML:#game">
+		<p>this is going to be leaderBoard</p>
+	</div>
+}
+
+templ Waiting(usernames []string) {
+	<div hx-swap-oob="innerHTML:#game">
+		<p>You Have Done this Question :), now wait for this players: </p>
+		<ul>
+			for _,username:=range usernames {
+				<li>
+					{ username }
+				</li>
+			}
+		</ul>
+	</div>
+}
+
+templ TimeLoader(time int) {
+	if time==1000 {
+		<div hx-swap-oob="innerHTML:#time"></div>
+	} else {
+		<div hx-swap-oob="innerHTML:#time">
+			<p>time left : { fmt.Sprintf("%d",time) }</p>
+		</div>
+	}
 }
 
 templ CreateQuestion(number int) {
@@ -63,7 +92,7 @@ templ CreateQuestion(number int) {
 
 templ Topics(topic types.Topic) {
 	<div>
-		<input type="radio" id={ fmt.Sprintf("%s", topic.Name) } name="topic" value={ fmt.Sprintf("%s", topic.Name) }/>
+		<input type="radio" id={ fmt.Sprintf("%s", topic.Name) } name="topic" value={ fmt.Sprintf("%s", topic.Name) } required/>
 		<label for={ fmt.Sprintf("%s", topic.Name) }>{ topic.Name }</label>
 		<br/>
 	</div>
