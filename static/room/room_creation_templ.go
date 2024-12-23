@@ -29,7 +29,7 @@ func LoadCreationOfRoom() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><script src=\"https://unpkg.com/htmx.org@1.9.2\"></script><title>Create Room</title></head><body><div class=\"room\"><form hx-post=\"/room/create/confirm\"><div class=\"form-group\"><label for=\"code\">number of players</label> <input type=\"text\" id=\"players\" name=\"players\" required></div><div class=\"form-group\"><label for=\"questions\">number of questions</label> <input type=\"number\" id=\"questions\" name=\"questions\" min=\"5\" max=\"20\" required></div><button type=\"submit\" class=\"btn\">Confirm</button></form></div></body>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><script src=\"https://unpkg.com/htmx.org@1.9.2\"></script><title>Create Room</title></head><body><div class=\"room\"><form hx-post=\"/room/create/confirm\"><div class=\"form-group\"><label for=\"code\">number of players</label> <input type=\"number\" id=\"players\" name=\"players\" min=\"1\" max=\"100\" required></div><div class=\"form-group\"><label for=\"questions\">number of questions</label> <input type=\"number\" id=\"questions\" name=\"questions\" min=\"5\" max=\"20\" required></div><button type=\"submit\" class=\"btn\">Confirm</button></form></div></body>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
