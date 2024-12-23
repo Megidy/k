@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
+	"github.com/Megidy/k/pkg/auth"
 	"github.com/Megidy/k/static/game"
 	"github.com/Megidy/k/static/room"
 	"github.com/Megidy/k/static/topic"
@@ -28,34 +30,37 @@ func NewGameHandler(clienSideHandler types.ClientSideHandler, gameStore types.Ga
 	}
 }
 
-func (h *gameHandler) RegisterRoutes(router gin.IRouter) {
+func (h *gameHandler) RegisterRoutes(router gin.IRouter, authHandler *auth.Handler) {
 	//game Handlers:
 	//1 : handle template for game
-	router.GET("/game/:roomID", h.HandleGame)
+	router.GET("/game/:roomID", authHandler.WithJWT, h.HandleGame)
 	//handler information about room , will add questions
-	router.GET("/game/:roomID/info/:players/:questions", h.LoadInfoTempl)
+	router.GET("/game/:roomID/info/:players/:questions", authHandler.WithJWT, h.LoadInfoTempl)
 	//confirm information about room ,redirect to the game handler : /game/:roomID
-	router.POST("/game/:roomID/info/:players/:questions/confirm", h.ConfirmInfo)
+	router.POST("/game/:roomID/info/:players/:questions/confirm", authHandler.WithJWT, h.ConfirmInfo)
 	//2 : handle ws connection for game
-	router.GET("/ws/game/handler/:roomID", h.HandleWSConnectionForGame)
+	router.GET("/ws/game/handler/:roomID", authHandler.WithJWT, h.HandleWSConnectionForGame)
 
 	//connection to room
-	router.GET("/room/connect", h.LoadTemplConnectToRoom)
-	router.POST("/room/connect/confirm", h.ConfirmConnectionToRoom)
+	router.GET("/room/connect", authHandler.WithJWT, h.LoadTemplConnectToRoom)
+	router.POST("/room/connect/confirm", authHandler.WithJWT, h.ConfirmConnectionToRoom)
 
 	//room creation
-	router.GET("/room/create", h.LoadTemplCreateRoom)
-	router.POST("/room/create/confirm", h.ConfirmCreationOfRoom)
+	router.GET("/room/create", authHandler.WithJWT, h.LoadTemplCreateRoom)
+	router.POST("/room/create/confirm", authHandler.WithJWT, h.ConfirmCreationOfRoom)
 	//creating question
-	router.GET("/topic/create", h.LoadTopicCreation)
-	router.POST("/topic/create/confirm", h.ConfirmTopicCreation)
-	router.GET("/topic/:topicID/:name/:amountOfQuestions/questions", h.LoadCreationOfQuestions)
-	router.POST("/topic/:topicID/:name/:amountOfQuestions/questions/confirm", h.ConfirmCreationOfQuestion)
+	router.GET("/topic/create", authHandler.WithJWT, h.LoadTopicCreation)
+	router.POST("/topic/create/confirm", authHandler.WithJWT, h.ConfirmTopicCreation)
+	router.GET("/topic/:topicID/:name/:amountOfQuestions/questions", authHandler.WithJWT, h.LoadCreationOfQuestions)
+	router.POST("/topic/:topicID/:name/:amountOfQuestions/questions/confirm", authHandler.WithJWT, h.ConfirmCreationOfQuestion)
 }
 
 func (h *gameHandler) LoadInfoTempl(c *gin.Context) {
 	roomID := c.Param("roomID")
-	topics, err := h.gameStore.GetUsersTopics("7e53c152-4862-4f82-9f3d-d77c6d69c564")
+	u, _ := c.Get("user")
+	user := u.(*types.User)
+	log.Println("user :", user)
+	topics, err := h.gameStore.GetUsersTopics(user.ID)
 	if err != nil {
 		log.Println("error : ", err)
 		return
@@ -151,7 +156,7 @@ func (h *gameHandler) ConfirmCreationOfRoom(c *gin.Context) {
 	b := make([]byte, 6)
 	rand.Read(b)
 	roomID := base64.StdEncoding.EncodeToString(b)
-
+	roomID = strings.ReplaceAll(roomID, "/", "d")
 	//create cookie for connection secure
 	url := fmt.Sprintf("/game/%s/info/%s/%s", roomID, numberOfPlayers, amountOfQuestions)
 	c.Writer.Header().Add("HX-Redirect", url)
@@ -227,7 +232,8 @@ func (h *gameHandler) ConfirmCreationOfQuestion(c *gin.Context) {
 		log.Println("Question №", i+1, " : ", q)
 		questions = append(questions, q)
 	}
-	err = h.gameStore.CreateTopic(questions)
+	u, _ := c.Get("user")
+	err = h.gameStore.CreateTopic(questions, u.(*types.User).ID)
 	if err != nil {
 		log.Println("error when creating topic :", err)
 		return
