@@ -14,6 +14,8 @@ templ Game(roomID string) {
 	</head>
 	<body>
 		<div hx-ext="ws" ws-connect={fmt.Sprintf("/ws/game/handler/%s",roomID)}>
+		<div id="time">
+		</div>
 			<div id="game">
 				<p>Waiting for other players</p>
 			</div>
