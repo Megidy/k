@@ -27,13 +27,15 @@ import (
 // )
 
 type Client struct {
-	ginCtx      *gin.Context
-	userName    string
-	conn        *websocket.Conn
-	manager     *Manager
-	question    types.Question
-	writeWaitCh chan []string
-	lenOfWait   int
+	isReady      bool
+	ginCtx       *gin.Context
+	userName     string
+	conn         *websocket.Conn
+	manager      *Manager
+	questionCh   chan types.Question
+	writeWaitCh  chan []string
+	endWriteCh   chan bool
+	currQuestion int
 }
 
 func NewClient(userName string, conn *websocket.Conn, manager *Manager, ctx *gin.Context) *Client {
@@ -43,14 +45,19 @@ func NewClient(userName string, conn *websocket.Conn, manager *Manager, ctx *gin
 		userName:    userName,
 		conn:        conn,
 		manager:     manager,
+		questionCh:  make(chan types.Question),
 		writeWaitCh: make(chan []string),
+		endWriteCh:  make(chan bool),
 	}
 }
 
 func (c *Client) ReadPump() {
 	defer func() {
 		log.Println("READ PUMP : exited readpump goroutine of client: ", c.userName)
+		// c.manager.clientsLeaveCh <- c
+		c.endWriteCh <- true
 		c.manager.DeleteClientFromConnectionPool(c)
+
 	}()
 	for {
 		_, txt, err := c.conn.ReadMessage()
@@ -61,13 +68,10 @@ func (c *Client) ReadPump() {
 			}
 			break
 		}
+		c.manager.readyCh <- c
 		var data types.RequestData
-
 		json.Unmarshal(txt, &data)
-		c.manager.HandlePointScoreness(c, data)
-		c.manager.mu.Lock()
-		c.manager.doneMap[c] = true
-		c.manager.mu.Unlock()
+		// c.manager.HandlePointScoreness(c, data)
 		log.Println("READ PUMP : client : ", c.userName, " answered question")
 	}
 
@@ -76,20 +80,19 @@ func (c *Client) ReadPump() {
 func (c *Client) WritePump() {
 	defer func() {
 		log.Println("WRITE PUMP : exited writepump goroutine of client: ", c.userName)
-		close(c.writeWaitCh)
+		c.conn.Close()
+		close(c.endWriteCh)
 	}()
 	for {
 		select {
-		case <-c.manager.ctx.Done():
-			c.conn.Close()
+		case <-c.endWriteCh:
 			return
-		case q, ok := <-c.manager.broadcast:
+		case <-c.manager.ctx.Done():
+			return
+		case q, ok := <-c.questionCh:
 			if !ok {
 				log.Println("WRITE PUMP : channel closed while writing to user")
 				return
-			}
-			if q.Id == c.question.Id {
-				continue
 			}
 			if q.Id == "ID-leaderBoard" {
 				comp := components.LeaderBoard()
@@ -102,8 +105,6 @@ func (c *Client) WritePump() {
 				}
 				continue
 			}
-
-			c.question = q
 			log.Println("current question : ", q)
 			comp := components.Question(q)
 			buffer := &bytes.Buffer{}
@@ -116,18 +117,8 @@ func (c *Client) WritePump() {
 					return
 				}
 				log.Println("WRITE PUMP : error when writing message: ", err)
-
 			}
-		case list, ok := <-c.writeWaitCh:
-			if !ok {
-				log.Println("WRITE PUMP : error when reading from writeWaitCh of user , : ", c.userName)
-				return
-			}
-			if len(list) == c.lenOfWait {
-				continue
-			}
-			c.lenOfWait = len(list)
-
+		case list := <-c.writeWaitCh:
 			comp := components.Waiting(list)
 			buffer := &bytes.Buffer{}
 			comp.Render(context.Background(), buffer)
@@ -136,8 +127,7 @@ func (c *Client) WritePump() {
 			if err != nil {
 				log.Println("WRITE PUMP : error when writing message: ", err)
 			}
+			continue
 		}
-
 	}
-
 }
