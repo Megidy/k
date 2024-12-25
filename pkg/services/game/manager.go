@@ -150,6 +150,7 @@ func (m *Manager) DeleteClientFromConnectionPool(client *Client) {
 	m.stockMap[client.userName] = client
 	delete(m.clientsMap, client.userName)
 	m.mu.Unlock()
+	globalRoomManager.DeleteConnectionFromList(m, client.userName)
 }
 
 // implement function start the game
@@ -168,7 +169,7 @@ func (m *Manager) NewConnection(c *gin.Context) {
 
 	//adding him to connection pool, meanwhile cheking if he was connected before
 	wasInGameBefore := m.AddClientToConnectionPool(client)
-
+	globalRoomManager.AddConnectionToList(m, client.userName)
 	//start of the game
 	<-m.startGameCh
 	//starting w/r pumps
@@ -183,7 +184,7 @@ func (m *Manager) NewConnection(c *gin.Context) {
 		}
 
 	} else {
-		if m.statementOfGame == 1 {
+		if m.numberOfCurrentQuestion > 0 {
 			log.Println("d")
 			m.addClientToWaitList <- client
 			m.overwriteQuestionCh <- client.userName
@@ -215,6 +216,7 @@ func (m *Manager) MessageQueue() {
 				}
 			}
 			m.mu.Unlock()
+		//write curr waitList for new client
 		case username := <-m.overwriteQuestionCh:
 			m.mu.Lock()
 
@@ -262,7 +264,10 @@ func (m *Manager) WaitListHandler() {
 					m.waitList = append(m.waitList[:index], m.waitList[index+1:]...)
 				}
 			}
-			if len(m.waitList) == 0 {
+			m.mu.Lock()
+			length := len(m.clientsMap)
+			m.mu.Unlock()
+			if len(m.waitList) == 0 && length != 0 {
 				m.updateQuestionCh <- true
 			} else {
 				m.changeListCh <- true
