@@ -3,6 +3,7 @@ package game
 import (
 	"context"
 	"log"
+	"sort"
 	"sync"
 
 	"github.com/Megidy/k/types"
@@ -76,7 +77,7 @@ type Manager struct {
 	//channel to update notify when shoul question has to be updated
 	updateQuestionCh chan bool
 	//channel to load leaderboard
-	// loadLeaderBoardCh chan []*Client
+	loadLeaderBoardCh chan []types.Player
 }
 
 func NewManager(roomID string, numberOfPlayers, amountOfQuestions int, questions []types.Question) *Manager {
@@ -104,6 +105,7 @@ func NewManager(roomID string, numberOfPlayers, amountOfQuestions int, questions
 		addClientToWaitList:      make(chan *Client),
 		removeClientFromWaitList: make(chan *Client),
 		updateQuestionCh:         make(chan bool),
+		loadLeaderBoardCh:        make(chan []types.Player),
 	}
 	go manager.MessageQueue()
 	go manager.ClientsStatusHandler()
@@ -246,6 +248,12 @@ func (m *Manager) MessageQueue() {
 			client := m.clientsMap[username]
 			client.writeWaitCh <- m.waitList
 			m.mu.Unlock()
+		case players := <-m.loadLeaderBoardCh:
+			m.mu.Lock()
+			for _, client := range m.clientsMap {
+				client.leaderBoardCh <- players
+			}
+			m.mu.Unlock()
 		}
 	}
 }
@@ -303,9 +311,25 @@ func (m *Manager) QuestionHandler() {
 		select {
 		case <-m.updateQuestionCh:
 			if m.numberOfCurrentQuestion == m.numberOfQuestions-1 {
-				//later : handle end of the game
+
 				log.Println("game ended")
-				// m.loadLeaderBoard<-
+
+				var leaderBoard = make(map[string]int)
+				m.mu.Lock()
+				for name, client := range m.clientsMap {
+					leaderBoard[name] = client.score
+				}
+
+				m.mu.Unlock()
+				players := make([]types.Player, 0)
+				for name, points := range leaderBoard {
+					players = append(players, types.Player{Username: name, Score: points})
+				}
+				sort.Slice(players, func(i, j int) bool {
+					return players[i].Score > players[j].Score
+
+				})
+				m.loadLeaderBoardCh <- players
 			} else {
 				m.numberOfCurrentQuestion++
 				//changing question and sending message to channel that everyone is ready and new question can be delivered
