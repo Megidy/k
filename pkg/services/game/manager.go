@@ -75,6 +75,8 @@ type Manager struct {
 	removeClientFromWaitList chan *Client
 	//channel to update notify when shoul question has to be updated
 	updateQuestionCh chan bool
+	//channel to load leaderboard
+	// loadLeaderBoardCh chan []*Client
 }
 
 func NewManager(roomID string, numberOfPlayers, amountOfQuestions int, questions []types.Question) *Manager {
@@ -112,6 +114,15 @@ func NewManager(roomID string, numberOfPlayers, amountOfQuestions int, questions
 	return manager
 }
 
+func (m *Manager) ScoreHandler(client *Client, requestData *types.RequestData) {
+	question := m.questions[client.currQuestion]
+
+	if requestData.Answer == question.CorrectAnswer {
+		log.Println("added point for : ", client)
+		client.score++
+	}
+}
+
 func (m *Manager) AddClientToConnectionPool(client *Client) bool {
 	var wasInGameBefore bool
 	m.mu.Lock()
@@ -127,7 +138,8 @@ func (m *Manager) AddClientToConnectionPool(client *Client) bool {
 		} else {
 			client.isReady = false
 		}
-
+		client.currQuestion = c.currQuestion
+		client.score = c.score
 		delete(m.stockMap, c.userName)
 		wasInGameBefore = true
 	} else {
@@ -138,7 +150,7 @@ func (m *Manager) AddClientToConnectionPool(client *Client) bool {
 
 	// }
 	m.clientsMap[client.userName] = client
-	log.Println("Added new client : ", client.userName)
+	log.Println("Added new client to connection pool : ", client.userName)
 	m.mu.Unlock()
 
 	return wasInGameBefore
@@ -170,11 +182,11 @@ func (m *Manager) NewConnection(c *gin.Context) {
 	//adding him to connection pool, meanwhile cheking if he was connected before
 	wasInGameBefore := m.AddClientToConnectionPool(client)
 	globalRoomManager.AddConnectionToList(m, client.userName)
-	//start of the game
-	<-m.startGameCh
 	//starting w/r pumps
 	m.clientsConnectionCh <- client
-
+	// <-updateQueueCh
+	//start of the game
+	<-m.startGameCh
 	if wasInGameBefore {
 		if client.isReady {
 			m.overwriteListCh <- client.userName
@@ -182,12 +194,15 @@ func (m *Manager) NewConnection(c *gin.Context) {
 			m.addClientToWaitList <- client
 			m.overwriteQuestionCh <- client.userName
 		}
+		log.Println("added new client who was in game before")
 
 	} else {
-		if m.numberOfCurrentQuestion > 0 {
+		if m.statementOfGame == 1 {
 			log.Println("d")
 			m.addClientToWaitList <- client
 			m.overwriteQuestionCh <- client.userName
+			log.Println("added new client")
+
 		}
 		log.Println("started goroutine for new client : ", client.userName)
 	}
@@ -201,7 +216,7 @@ func (m *Manager) MessageQueue() {
 		case <-m.changeQuestionCh:
 			m.mu.Lock()
 			for _, client := range m.clientsMap {
-				m.waitList = append(m.waitList, client.userName)
+				// m.waitList = append(m.waitList, client.userName)
 				client.currQuestion = m.numberOfCurrentQuestion
 				client.isReady = false
 				client.questionCh <- m.currentQuestion
@@ -259,15 +274,22 @@ func (m *Manager) WaitListHandler() {
 			m.waitList = append(m.waitList, client.userName)
 			m.changeListCh <- true
 		case client := <-m.removeClientFromWaitList:
-			for index, value := range m.waitList {
-				if value == client.userName {
-					m.waitList = append(m.waitList[:index], m.waitList[index+1:]...)
+			newWaitList := []string{}
+			for _, value := range m.waitList {
+				if value != client.userName {
+					newWaitList = append(newWaitList, value)
 				}
 			}
+			m.waitList = newWaitList
 			m.mu.Lock()
 			length := len(m.clientsMap)
 			m.mu.Unlock()
 			if len(m.waitList) == 0 && length != 0 {
+				m.mu.Lock()
+				for username := range m.clientsMap {
+					m.waitList = append(m.waitList, username)
+				}
+				m.mu.Unlock()
 				m.updateQuestionCh <- true
 			} else {
 				m.changeListCh <- true
@@ -280,17 +302,18 @@ func (m *Manager) QuestionHandler() {
 	for {
 		select {
 		case <-m.updateQuestionCh:
-			if m.numberOfCurrentQuestion == len(m.questions)-1 {
-
-				//later : handler end of the game
-				m.numberOfCurrentQuestion = 0
+			if m.numberOfCurrentQuestion == m.numberOfQuestions-1 {
+				//later : handle end of the game
+				log.Println("game ended")
+				// m.loadLeaderBoard<-
 			} else {
 				m.numberOfCurrentQuestion++
-
+				//changing question and sending message to channel that everyone is ready and new question can be delivered
+				m.currentQuestion = m.questions[m.numberOfCurrentQuestion]
+				log.Println("current question : ", m.currentQuestion)
+				m.changeQuestionCh <- true
 			}
-			//changing question and sending message to channel that everyone is ready and new question can be delivered
-			m.currentQuestion = m.questions[m.numberOfCurrentQuestion]
-			m.changeQuestionCh <- true
+
 		}
 	}
 }
