@@ -30,6 +30,7 @@ type Client struct {
 	isReady      bool
 	ginCtx       *gin.Context
 	userName     string
+	score        int
 	conn         *websocket.Conn
 	manager      *Manager
 	questionCh   chan types.Question
@@ -71,6 +72,7 @@ func (c *Client) ReadPump() {
 		c.manager.readyCh <- c
 		var data types.RequestData
 		json.Unmarshal(txt, &data)
+		c.manager.ScoreHandler(c, &data)
 		// c.manager.HandlePointScoreness(c, data)
 		log.Println("READ PUMP : client : ", c.userName, " answered question")
 	}
@@ -105,7 +107,7 @@ func (c *Client) WritePump() {
 				}
 				continue
 			}
-			log.Println("current question : ", q)
+
 			comp := components.Question(q)
 			buffer := &bytes.Buffer{}
 			comp.Render(context.Background(), buffer)
