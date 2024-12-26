@@ -58,7 +58,14 @@ func (c *Client) ReadPump() {
 	defer func() {
 		log.Println("READ PUMP : exited readpump goroutine of client: ", c.userName)
 		// c.manager.clientsLeaveCh <- c
+
+		// select {
+		// case c.endWriteCh <- true:
+		// default:
+		// 	log.Println("endWriteCh is already closed or not accessible")
+		// }
 		c.endWriteCh <- true
+		close(c.endWriteCh)
 		c.manager.DeleteClientFromConnectionPool(c)
 
 	}()
@@ -85,7 +92,9 @@ func (c *Client) WritePump() {
 	defer func() {
 		log.Println("WRITE PUMP : exited writepump goroutine of client: ", c.userName)
 		c.conn.Close()
-		close(c.endWriteCh)
+		close(c.questionCh)
+		close(c.writeWaitCh)
+		close(c.leaderBoardCh)
 	}()
 	for {
 		select {
@@ -98,18 +107,6 @@ func (c *Client) WritePump() {
 				log.Println("WRITE PUMP : channel closed while writing to user")
 				return
 			}
-			// if q.Id == "ID-leaderBoard" {
-			// 	comp := components.LeaderBoard()
-			// 	buffer := &bytes.Buffer{}
-			// 	comp.Render(context.Background(), buffer)
-
-			// 	err := c.conn.WriteMessage(websocket.TextMessage, buffer.Bytes())
-			// 	if err != nil {
-			// 		log.Println("WRITE PUMP : error when writing message: ", err)
-			// 	}
-			// 	continue
-			// }
-
 			comp := components.Question(q)
 			buffer := &bytes.Buffer{}
 			comp.Render(context.Background(), buffer)
