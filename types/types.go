@@ -8,6 +8,10 @@ type User struct {
 	Email    string
 	Password string
 }
+type Player struct {
+	Username string
+	Score    int
+}
 type Topic struct {
 	TopicID string
 	UserID  string
