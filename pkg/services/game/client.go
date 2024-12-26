@@ -27,28 +27,30 @@ import (
 // )
 
 type Client struct {
-	isReady      bool
-	ginCtx       *gin.Context
-	userName     string
-	score        int
-	conn         *websocket.Conn
-	manager      *Manager
-	questionCh   chan types.Question
-	writeWaitCh  chan []string
-	endWriteCh   chan bool
-	currQuestion int
+	isReady       bool
+	ginCtx        *gin.Context
+	userName      string
+	score         int
+	conn          *websocket.Conn
+	manager       *Manager
+	questionCh    chan types.Question
+	writeWaitCh   chan []string
+	endWriteCh    chan bool
+	leaderBoardCh chan []types.Player
+	currQuestion  int
 }
 
 func NewClient(userName string, conn *websocket.Conn, manager *Manager, ctx *gin.Context) *Client {
 
 	return &Client{
-		ginCtx:      ctx,
-		userName:    userName,
-		conn:        conn,
-		manager:     manager,
-		questionCh:  make(chan types.Question),
-		writeWaitCh: make(chan []string),
-		endWriteCh:  make(chan bool),
+		ginCtx:        ctx,
+		userName:      userName,
+		conn:          conn,
+		manager:       manager,
+		questionCh:    make(chan types.Question),
+		writeWaitCh:   make(chan []string),
+		endWriteCh:    make(chan bool),
+		leaderBoardCh: make(chan []types.Player),
 	}
 }
 
@@ -96,17 +98,17 @@ func (c *Client) WritePump() {
 				log.Println("WRITE PUMP : channel closed while writing to user")
 				return
 			}
-			if q.Id == "ID-leaderBoard" {
-				comp := components.LeaderBoard()
-				buffer := &bytes.Buffer{}
-				comp.Render(context.Background(), buffer)
+			// if q.Id == "ID-leaderBoard" {
+			// 	comp := components.LeaderBoard()
+			// 	buffer := &bytes.Buffer{}
+			// 	comp.Render(context.Background(), buffer)
 
-				err := c.conn.WriteMessage(websocket.TextMessage, buffer.Bytes())
-				if err != nil {
-					log.Println("WRITE PUMP : error when writing message: ", err)
-				}
-				continue
-			}
+			// 	err := c.conn.WriteMessage(websocket.TextMessage, buffer.Bytes())
+			// 	if err != nil {
+			// 		log.Println("WRITE PUMP : error when writing message: ", err)
+			// 	}
+			// 	continue
+			// }
 
 			comp := components.Question(q)
 			buffer := &bytes.Buffer{}
@@ -130,6 +132,14 @@ func (c *Client) WritePump() {
 				log.Println("WRITE PUMP : error when writing message: ", err)
 			}
 			continue
+		case players := <-c.leaderBoardCh:
+			comp := components.LeaderBoard(players)
+			buffer := &bytes.Buffer{}
+			comp.Render(context.Background(), buffer)
+			err := c.conn.WriteMessage(websocket.TextMessage, buffer.Bytes())
+			if err != nil {
+				log.Println("WRITE PUMP : error when writing message: ", err)
+			}
 		}
 	}
 }
