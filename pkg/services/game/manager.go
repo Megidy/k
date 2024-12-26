@@ -13,17 +13,6 @@ import (
 
 var upgrader = websocket.Upgrader{}
 
-//TO DO :
-
-//1 : make password
-
-//2 : when client connects twice from one account make second request unavaible ,maybe 401 or smth like that
-
-//3 : make normal leave and connection while game for players who was in stock -> write normal isReady statement.
-//
-//	there are 1 solution probably made , but implement this right and add timer.
-
-// 4 : when new client connects , those who answered qeustion dont see him in waitList
 type Manager struct {
 	//statement of game
 	//0 - not started yet
@@ -64,8 +53,6 @@ type Manager struct {
 	waitList []string
 	//channel for getting clients request about readiness
 	readyCh chan *Client
-	//channel to handle safe clients leave
-	clientsLeaveCh chan *Client
 	//channel to handle th connection
 	clientsConnectionCh chan *Client
 	//channel to start the game
@@ -101,7 +88,6 @@ func NewManager(roomID string, numberOfPlayers, amountOfQuestions int, questions
 		readyCh:                  make(chan *Client),
 		startGameCh:              make(chan bool),
 		clientsConnectionCh:      make(chan *Client),
-		clientsLeaveCh:           make(chan *Client),
 		addClientToWaitList:      make(chan *Client),
 		removeClientFromWaitList: make(chan *Client),
 		updateQuestionCh:         make(chan bool),
@@ -212,10 +198,23 @@ func (m *Manager) NewConnection(c *gin.Context) {
 }
 
 func (m *Manager) MessageQueue() {
+	defer func() {
+		log.Println("MESSAGE QUEUE | exited goroutine")
+		close(m.overwriteListCh)
+		close(m.overwriteQuestionCh)
+		close(m.readyCh)
+		close(m.clientsConnectionCh)
+		close(m.addClientToWaitList)
+		globalRoomManager.EndRoomSession(m.roomID)
+	}()
 	for {
 		select {
 		//change question for all connected clients
-		case <-m.changeQuestionCh:
+		case _, ok := <-m.changeQuestionCh:
+			if !ok {
+				log.Println("tried to read from closed changeQuestionCh in MessageQueue")
+				return
+			}
 			m.mu.Lock()
 			for _, client := range m.clientsMap {
 				// m.waitList = append(m.waitList, client.userName)
@@ -225,16 +224,25 @@ func (m *Manager) MessageQueue() {
 			}
 			m.mu.Unlock()
 		//write curr question for new client
-		case <-m.changeListCh:
+		case _, ok := <-m.changeListCh:
+			if !ok {
+				log.Println("tried to read from closed changeListCh in MessageQueue")
+				return
+			}
 			m.mu.Lock()
 			for _, client := range m.clientsMap {
+
 				if client.isReady {
 					client.writeWaitCh <- m.waitList
 				}
 			}
 			m.mu.Unlock()
 		//write curr waitList for new client
-		case username := <-m.overwriteQuestionCh:
+		case username, ok := <-m.overwriteQuestionCh:
+			if !ok {
+				log.Println("tried to read from closed overwriteQuestionCh in MessageQueue")
+				return
+			}
 			m.mu.Lock()
 
 			client := m.clientsMap[username]
@@ -243,31 +251,52 @@ func (m *Manager) MessageQueue() {
 			client.questionCh <- m.currentQuestion
 			m.mu.Unlock()
 		//write list of not done clients if client is answered question
-		case username := <-m.overwriteListCh:
+		case username, ok := <-m.overwriteListCh:
+			if !ok {
+				log.Println("tried to read from closed overwriteListCh in MessageQueue")
+				return
+			}
 			m.mu.Lock()
 			client := m.clientsMap[username]
 			client.writeWaitCh <- m.waitList
 			m.mu.Unlock()
-		case players := <-m.loadLeaderBoardCh:
+		case players, ok := <-m.loadLeaderBoardCh:
+			if !ok {
+				log.Println("tried to read from closed loadLeaderBoardCh in MessageQueue")
+				return
+			}
 			m.mu.Lock()
 			for _, client := range m.clientsMap {
 				client.leaderBoardCh <- players
 			}
 			m.mu.Unlock()
+			m.cancel()
+			return
 		}
 	}
 }
 
 func (m *Manager) ClientsStatusHandler() {
-
+	defer func() {
+		log.Println("CLIENTSSTATUSHANDLER | exited goroutine")
+		close(m.removeClientFromWaitList)
+	}()
 	for {
 		select {
-		case client := <-m.readyCh:
+		case <-m.ctx.Done():
+			return
+		case client, ok := <-m.readyCh:
+			if !ok {
+				log.Println("tried to read from closed readyCh in ClientsStatusHandler")
+				return
+			}
 			client.isReady = true
 			m.removeClientFromWaitList <- client
-
-		case <-m.clientsLeaveCh:
-		case client := <-m.clientsConnectionCh:
+		case client, ok := <-m.clientsConnectionCh:
+			if !ok {
+				log.Println("tried to read from closed clientsConnectionCh in ClientsStatusHandler")
+				return
+			}
 			go client.ReadPump()
 			go client.WritePump()
 		}
@@ -276,12 +305,27 @@ func (m *Manager) ClientsStatusHandler() {
 }
 
 func (m *Manager) WaitListHandler() {
+	defer func() {
+		log.Println("WAITLISTHANDLER | exited goroutine")
+		close(m.changeListCh)
+		close(m.updateQuestionCh)
+	}()
 	for {
 		select {
-		case client := <-m.addClientToWaitList:
+		case <-m.ctx.Done():
+			return
+		case client, ok := <-m.addClientToWaitList:
+			if !ok {
+				log.Println("tried to read from closed addClientToWaitList in WaitListHandler")
+				return
+			}
 			m.waitList = append(m.waitList, client.userName)
 			m.changeListCh <- true
-		case client := <-m.removeClientFromWaitList:
+		case client, ok := <-m.removeClientFromWaitList:
+			if !ok {
+				log.Println("tried to read from closed removeClientFromWaitList in WaitListHandler")
+				return
+			}
 			newWaitList := []string{}
 			for _, value := range m.waitList {
 				if value != client.userName {
@@ -307,9 +351,20 @@ func (m *Manager) WaitListHandler() {
 }
 
 func (m *Manager) QuestionHandler() {
+	defer func() {
+		log.Println("QUESTIONHANDLER | exited goroutine")
+		close(m.changeQuestionCh)
+		close(m.loadLeaderBoardCh)
+	}()
 	for {
 		select {
-		case <-m.updateQuestionCh:
+		case <-m.ctx.Done():
+			return
+		case _, ok := <-m.updateQuestionCh:
+			if !ok {
+				log.Println("tried to read from closed updateQuestionCh in questionHandler")
+				return
+			}
 			if m.numberOfCurrentQuestion == m.numberOfQuestions-1 {
 
 				log.Println("game ended")
@@ -343,13 +398,16 @@ func (m *Manager) QuestionHandler() {
 }
 
 func (m *Manager) StartGame() {
+	defer func() {
+		log.Println("STARTGAME | GAME STARTED!")
+		log.Println("STARTGAME | exited goroutine")
+		close(m.startGameCh)
+	}()
 	for {
 		// log.Println("clients pool : ", len(m.clientsMap))
 		if len(m.clientsMap) == m.maxPlayers {
-			log.Println("GAME STARTED !!")
 			m.startGameCh <- true
 			m.changeQuestionCh <- true
-			close(m.startGameCh)
 			m.statementOfGame = 1
 			return
 		}
