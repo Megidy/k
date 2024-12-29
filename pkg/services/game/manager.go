@@ -13,12 +13,16 @@ import (
 
 var upgrader = websocket.Upgrader{}
 
+// TO DO :
+// 1 : overwrite stargame function , to make opportunity for client to start the game
+// 2 : fix the bug when game is not started , in case if some of the clients leave, question renders for clients
 type Manager struct {
 	//statement of game
 	//0 - not started yet
-	//1 - in progress
+	//1 - game just started , question =1
+	//2 - game in progress
 	//-1 - ended
-	statementOfGame int
+	gameState int
 	//unique ID of room
 	roomID string
 	//number of members
@@ -65,6 +69,11 @@ type Manager struct {
 	updateQuestionCh chan bool
 	//channel to load leaderboard
 	loadLeaderBoardCh chan []types.Player
+	//channels to update curr players before the game
+	beforeGameConnection chan bool
+	beforeGameLeave      chan bool
+	//channel to start gmae before all connnections are established
+	forcedStartOfGame chan bool
 }
 
 func NewManager(roomID string, numberOfPlayers, amountOfQuestions int, questions []types.Question) *Manager {
@@ -92,6 +101,9 @@ func NewManager(roomID string, numberOfPlayers, amountOfQuestions int, questions
 		removeClientFromWaitList: make(chan *Client),
 		updateQuestionCh:         make(chan bool),
 		loadLeaderBoardCh:        make(chan []types.Player),
+		beforeGameConnection:     make(chan bool),
+		beforeGameLeave:          make(chan bool),
+		forcedStartOfGame:        make(chan bool),
 	}
 	go manager.MessageQueue()
 	go manager.ClientsStatusHandler()
@@ -140,17 +152,26 @@ func (m *Manager) AddClientToConnectionPool(client *Client) bool {
 	m.clientsMap[client.userName] = client
 	log.Println("Added new client to connection pool : ", client.userName)
 	m.mu.Unlock()
-
+	if m.gameState == 0 {
+		m.beforeGameConnection <- true
+	}
 	return wasInGameBefore
 }
 
 func (m *Manager) DeleteClientFromConnectionPool(client *Client) {
 	m.mu.Lock()
 	m.removeClientFromWaitList <- client
-	m.stockMap[client.userName] = client
+	if m.gameState == 1 || m.gameState == 2 {
+		m.stockMap[client.userName] = client
+	}
+
 	delete(m.clientsMap, client.userName)
+	log.Println("deleted from clientsMap username : ", client.userName)
 	m.mu.Unlock()
 	globalRoomManager.DeleteConnectionFromList(m, client.userName)
+	if m.gameState == 0 {
+		m.beforeGameLeave <- true
+	}
 }
 
 // implement function start the game
@@ -173,28 +194,41 @@ func (m *Manager) NewConnection(c *gin.Context) {
 	//starting w/r pumps
 	m.clientsConnectionCh <- client
 	// <-updateQueueCh
-	//start of the game
 	<-m.startGameCh
-	if wasInGameBefore {
-		if client.isReady {
-			m.overwriteListCh <- client.userName
+	if m.gameState == 1 || m.gameState == 2 {
+		if wasInGameBefore {
+			if client.isReady {
+				m.overwriteListCh <- client.userName
+			} else {
+				if m.gameState == 2 {
+					m.mu.Lock()
+					_, ok := m.clientsMap[client.userName]
+					m.mu.Unlock()
+					if !ok {
+						return
+					}
+				}
+				m.addClientToWaitList <- client
+				m.overwriteQuestionCh <- client.userName
+			}
+			log.Println("added new client who was in game before")
+
 		} else {
-			m.addClientToWaitList <- client
-			m.overwriteQuestionCh <- client.userName
+			if m.gameState == 2 {
+				m.mu.Lock()
+				_, ok := m.clientsMap[client.userName]
+				m.mu.Unlock()
+				if !ok {
+					return
+				}
+				m.addClientToWaitList <- client
+				m.overwriteQuestionCh <- client.userName
+				log.Println("added new client")
+				log.Println("started goroutine for new client : ", client.userName)
+			}
 		}
-		log.Println("added new client who was in game before")
 
-	} else {
-		if m.statementOfGame == 1 {
-			log.Println("d")
-			m.addClientToWaitList <- client
-			m.overwriteQuestionCh <- client.userName
-			log.Println("added new client")
-
-		}
-		log.Println("started goroutine for new client : ", client.userName)
 	}
-
 }
 
 func (m *Manager) MessageQueue() {
@@ -245,7 +279,11 @@ func (m *Manager) MessageQueue() {
 			}
 			m.mu.Lock()
 
-			client := m.clientsMap[username]
+			client, ok := m.clientsMap[username]
+			if !ok {
+				log.Println("error when getting client : ", username)
+				break
+			}
 			client.isReady = false
 			client.currQuestion = m.numberOfCurrentQuestion
 			client.questionCh <- m.currentQuestion
@@ -297,6 +335,7 @@ func (m *Manager) ClientsStatusHandler() {
 				log.Println("tried to read from closed clientsConnectionCh in ClientsStatusHandler")
 				return
 			}
+			log.Println("started goroutines for : ", client.userName)
 			go client.ReadPump()
 			go client.WritePump()
 		}
@@ -337,14 +376,20 @@ func (m *Manager) WaitListHandler() {
 			length := len(m.clientsMap)
 			m.mu.Unlock()
 			if len(m.waitList) == 0 && length != 0 {
-				m.mu.Lock()
-				for username := range m.clientsMap {
-					m.waitList = append(m.waitList, username)
+				if m.gameState == 1 || m.gameState == 2 {
+					m.mu.Lock()
+					for username := range m.clientsMap {
+						m.waitList = append(m.waitList, username)
+					}
+					m.mu.Unlock()
+					m.updateQuestionCh <- true
 				}
-				m.mu.Unlock()
-				m.updateQuestionCh <- true
+
 			} else {
-				m.changeListCh <- true
+				if m.gameState == 1 || m.gameState == 2 {
+					m.changeListCh <- true
+				}
+
 			}
 		}
 	}
@@ -365,6 +410,9 @@ func (m *Manager) QuestionHandler() {
 				log.Println("tried to read from closed updateQuestionCh in questionHandler")
 				return
 			}
+			if m.numberOfCurrentQuestion == 1 {
+				m.gameState = 2
+			}
 			if m.numberOfCurrentQuestion == m.numberOfQuestions-1 {
 
 				log.Println("game ended")
@@ -372,6 +420,9 @@ func (m *Manager) QuestionHandler() {
 				var leaderBoard = make(map[string]int)
 				m.mu.Lock()
 				for name, client := range m.clientsMap {
+					leaderBoard[name] = client.score
+				}
+				for name, client := range m.stockMap {
 					leaderBoard[name] = client.score
 				}
 
@@ -404,12 +455,44 @@ func (m *Manager) StartGame() {
 		close(m.startGameCh)
 	}()
 	for {
-		// log.Println("clients pool : ", len(m.clientsMap))
-		if len(m.clientsMap) == m.maxPlayers {
-			m.startGameCh <- true
-			m.changeQuestionCh <- true
-			m.statementOfGame = 1
-			return
+
+		select {
+		case <-m.beforeGameConnection:
+			m.mu.Lock()
+			var listOfPlayers []string
+			for username := range m.clientsMap {
+				listOfPlayers = append(listOfPlayers, username)
+			}
+			for _, client := range m.clientsMap {
+				client.beforeGameWriterCh <- listOfPlayers
+			}
+			length := len(m.clientsMap)
+			m.mu.Unlock()
+			if length == m.maxPlayers {
+				m.mu.Lock()
+				for _, client := range m.clientsMap {
+					m.waitList = append(m.waitList, client.userName)
+				}
+				m.mu.Unlock()
+				m.startGameCh <- true
+				m.changeQuestionCh <- true
+				m.gameState = 1
+				return
+			}
+			log.Println("addded connection to before game state ,current list : ", listOfPlayers)
+		case <-m.beforeGameLeave:
+			m.mu.Lock()
+			var listOfPlayers []string
+			for username := range m.clientsMap {
+				listOfPlayers = append(listOfPlayers, username)
+			}
+			for _, client := range m.clientsMap {
+				client.beforeGameWriterCh <- listOfPlayers
+			}
+			m.mu.Unlock()
+			log.Println("deleted connection from before game state ,current list : ", listOfPlayers)
+		case <-m.forcedStartOfGame:
+
 		}
 	}
 }
