@@ -27,30 +27,32 @@ import (
 // )
 
 type Client struct {
-	isReady       bool
-	ginCtx        *gin.Context
-	userName      string
-	score         int
-	conn          *websocket.Conn
-	manager       *Manager
-	questionCh    chan types.Question
-	writeWaitCh   chan []string
-	endWriteCh    chan bool
-	leaderBoardCh chan []types.Player
-	currQuestion  int
+	isReady            bool
+	ginCtx             *gin.Context
+	userName           string
+	score              int
+	conn               *websocket.Conn
+	manager            *Manager
+	questionCh         chan types.Question
+	writeWaitCh        chan []string
+	endWriteCh         chan bool
+	leaderBoardCh      chan []types.Player
+	beforeGameWriterCh chan []string
+	currQuestion       int
 }
 
 func NewClient(userName string, conn *websocket.Conn, manager *Manager, ctx *gin.Context) *Client {
 
 	return &Client{
-		ginCtx:        ctx,
-		userName:      userName,
-		conn:          conn,
-		manager:       manager,
-		questionCh:    make(chan types.Question),
-		writeWaitCh:   make(chan []string),
-		endWriteCh:    make(chan bool),
-		leaderBoardCh: make(chan []types.Player),
+		ginCtx:             ctx,
+		userName:           userName,
+		conn:               conn,
+		manager:            manager,
+		questionCh:         make(chan types.Question),
+		writeWaitCh:        make(chan []string),
+		endWriteCh:         make(chan bool),
+		leaderBoardCh:      make(chan []types.Player),
+		beforeGameWriterCh: make(chan []string),
 	}
 }
 
@@ -67,7 +69,6 @@ func (c *Client) ReadPump() {
 		c.endWriteCh <- true
 		close(c.endWriteCh)
 		c.manager.DeleteClientFromConnectionPool(c)
-
 	}()
 	for {
 		_, txt, err := c.conn.ReadMessage()
@@ -95,6 +96,7 @@ func (c *Client) WritePump() {
 		close(c.questionCh)
 		close(c.writeWaitCh)
 		close(c.leaderBoardCh)
+		close(c.beforeGameWriterCh)
 	}()
 	for {
 		select {
@@ -131,6 +133,14 @@ func (c *Client) WritePump() {
 			continue
 		case players := <-c.leaderBoardCh:
 			comp := components.LeaderBoard(players)
+			buffer := &bytes.Buffer{}
+			comp.Render(context.Background(), buffer)
+			err := c.conn.WriteMessage(websocket.TextMessage, buffer.Bytes())
+			if err != nil {
+				log.Println("WRITE PUMP : error when writing message: ", err)
+			}
+		case list := <-c.beforeGameWriterCh:
+			comp := components.BeforeGameWaitList(list)
 			buffer := &bytes.Buffer{}
 			comp.Render(context.Background(), buffer)
 			err := c.conn.WriteMessage(websocket.TextMessage, buffer.Bytes())
