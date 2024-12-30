@@ -26,7 +26,7 @@ templ LeaderBoard(players []types.Player) {
 	<div hx-swap-oob="innerHTML:#leaderboard">
 		<ul>
 			for index,player:=range players {
-				<li>{fmt.Sprintf("%d",index+1)} :  username: {player.Username} , points of the {player.Username} are {fmt.Sprintf("%d",player.Score)}</li>
+				<li>{ fmt.Sprintf("%d",index+1) } :  username: { player.Username } , points of the { player.Username } are { fmt.Sprintf("%d",player.Score) }</li>
 			}
 		</ul>
 	</div>
@@ -45,14 +45,42 @@ templ Waiting(usernames []string) {
 	</div>
 }
 
+templ Spectator(usernames []string, leaderBoard []types.Player) {
+	<div hx-swap-oob="innerHTML:#spectator">
+		<p>didn't comlete question yet : </p>
+		<ul>
+			for _,username:=range usernames {
+				<li>
+					{ username }
+				</li>
+			}
+		</ul>
+		<p>current leaderboard: </p>
+		<ul>
+			for index,player:=range leaderBoard {
+				<li>{ fmt.Sprintf("%d",index+1) } :  username: { player.Username } , points of the { player.Username } are { fmt.Sprintf("%d",player.Score) }</li>
+			}
+		</ul>
+	</div>
+}
+
+templ BeforeGameWaitList(usernames []string) {
+	<div hx-swap-oob="innerHTML:#beforeGameWait">
+		<p>Connected Players : </p>
+		<ul>
+			for _,username:=range usernames {
+				<li>
+					{ username }
+				</li>
+			}
+		</ul>
+	</div>
+}
+
 templ TimeLoader(time int) {
-	if time==1000 {
-		<div hx-swap-oob="innerHTML:#time"></div>
-	} else {
-		<div hx-swap-oob="innerHTML:#time">
-			<p>time left : { fmt.Sprintf("%d",time) }</p>
-		</div>
-	}
+	<div hx-swap-oob="innerHTML:#time">
+		<p>time left : { fmt.Sprintf("%d",time) }</p>
+	</div>
 }
 
 templ LoadDuplicate() {
