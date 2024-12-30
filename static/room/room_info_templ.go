@@ -12,7 +12,7 @@ import "github.com/Megidy/k/types"
 import "github.com/Megidy/k/static/components"
 import "fmt"
 
-func LoadInfoPage(userTopics []types.Topic, defaultTopics []types.Topic, roomID, players, questions string) templ.Component {
+func LoadInfoPage(userTopics []types.Topic, defaultTopics []types.Topic, roomID, players, questions, playstyle string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -38,9 +38,9 @@ func LoadInfoPage(userTopics []types.Topic, defaultTopics []types.Topic, roomID,
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var2 string
-		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/game/%s/info/%s/%s/confirm", roomID, players, questions))
+		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/game/%s/info/%s/%s/%s/confirm", roomID, players, questions, playstyle))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/room/room_info.templ`, Line: 16, Col: 100}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/room/room_info.templ`, Line: 16, Col: 113}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
