@@ -38,6 +38,7 @@ type Client struct {
 	endWriteCh         chan bool
 	leaderBoardCh      chan []types.Player
 	beforeGameWriterCh chan []string
+	timeWriterCh       chan int
 	currQuestion       int
 }
 
@@ -53,6 +54,7 @@ func NewClient(userName string, conn *websocket.Conn, manager *Manager, ctx *gin
 		endWriteCh:         make(chan bool),
 		leaderBoardCh:      make(chan []types.Player),
 		beforeGameWriterCh: make(chan []string),
+		timeWriterCh:       make(chan int),
 	}
 }
 
@@ -82,9 +84,14 @@ func (c *Client) ReadPump() {
 		c.manager.readyCh <- c
 		var data types.RequestData
 		json.Unmarshal(txt, &data)
-		c.manager.ScoreHandler(c, &data)
-		// c.manager.HandlePointScoreness(c, data)
-		log.Println("READ PUMP : client : ", c.userName, " answered question")
+		if data.Answer == "" && c.manager.gameState == 0 {
+			c.manager.forcedStartOfGame <- true
+
+		} else {
+			c.manager.ScoreHandler(c, &data)
+			// c.manager.HandlePointScoreness(c, data)
+			log.Println("READ PUMP : client : ", c.userName, " answered question")
+		}
 	}
 
 }
@@ -141,6 +148,14 @@ func (c *Client) WritePump() {
 			}
 		case list := <-c.beforeGameWriterCh:
 			comp := components.BeforeGameWaitList(list)
+			buffer := &bytes.Buffer{}
+			comp.Render(context.Background(), buffer)
+			err := c.conn.WriteMessage(websocket.TextMessage, buffer.Bytes())
+			if err != nil {
+				log.Println("WRITE PUMP : error when writing message: ", err)
+			}
+		case time := <-c.timeWriterCh:
+			comp := components.TimeLoader(time)
 			buffer := &bytes.Buffer{}
 			comp.Render(context.Background(), buffer)
 			err := c.conn.WriteMessage(websocket.TextMessage, buffer.Bytes())
