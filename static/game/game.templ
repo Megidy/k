@@ -3,29 +3,61 @@ package game
 import "fmt"
 
 // import "github.com/Megidy/k/static/components"
-templ Game(roomID string, isAlreadyPlaying bool, isFound bool) {
+templ Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSpectator bool) {
 	<head>
 		<title>Game</title>
 		<script src="https://unpkg.com/htmx.org@1.9.8"></script>
 		<script src="https://unpkg.com/htmx.org/dist/ext/multi-swap.js"></script>
 		<script src="https://unpkg.com/htmx.org/dist/ext/ws.js"></script>
+		<meta name="htmx-config" content='{"wsReconnectDelay":"10"}'/>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 	</head>
 	<body>
 		if !isFound {
 			<div>game in which you are trying to connect was finished or doesnt exists :((</div>
 		} else {
-			if isAlreadyPlaying {
-				<div>You are already playing this game,so you can't answer twice :((</div>
+			if isOwner {
+				if isSpectator {
+					// <div hx-ext="ws" ws-connect={ fmt.Sprintf("/ws/game/handler/%s", roomID) } ws-reconnect-delay="10000">
+					// 	<div id="leaderboard">
+					// 		<div id="time"></div>
+					// 		<div id="spectator">
+					// 			<p>You are spectating , so you can't play , just watch the current results </p>
+					// 			<button type="submit" ws-send>force start</button>
+					// 			<div id="beforeGameWait"></div>
+					// 		</div>
+					// 	</div>
+					// </div>
+				} else {
+					if isAlreadyPlaying {
+						<div>You are already playing this game,so you can't answer twice :((</div>
+					} else {
+						<div hx-ext="ws" ws-connect={ fmt.Sprintf("/ws/game/handler/%s", roomID) } ws-reconnect-delay="10000">
+							<div id="leaderboard">
+								<div id="time"></div>
+								<div id="game">
+									<p>Waiting for other players to connect </p>
+									<button type="submit" ws-send>force start</button>
+									<div id="beforeGameWait"></div>
+								</div>
+							</div>
+						</div>
+					}
+				}
 			} else {
-				<div hx-ext="ws" ws-connect={ fmt.Sprintf("/ws/game/handler/%s", roomID) }>
-					<div id="leaderboard">
-						<div id="time"></div>
-						<div id="game">
-							<p>Waiting for other players to connect </p>
+				if isAlreadyPlaying {
+					<div>You are already playing this game,so you can't answer twice :((</div>
+				} else {
+					<div hx-ext="ws" ws-connect={ fmt.Sprintf("/ws/game/handler/%s", roomID) } ws-reconnect-delay="10000">
+						<div id="leaderboard">
+							<div id="time"></div>
+							<div id="game">
+								<p>Waiting for other players to connect </p>
+								<div id="beforeGameWait"></div>
+							</div>
 						</div>
 					</div>
-				</div>
+				}
 			}
 		}
 	</body>
