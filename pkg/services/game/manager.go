@@ -17,7 +17,14 @@ var upgrader = websocket.Upgrader{}
 // 1 create timer which will later be dependent on the time of question
 // 2 create force start of the game
 // 3 make oportunity for owner of the session to spectate and collect data or play whi players
+// 4 if 0 connection and game is not started and noone connectes is 120 seconds , than delete room
 type Manager struct {
+	//owner of the room
+	owner string
+	//playsyle of the owner:
+	// 1 - player
+	// 2 - spectator
+	playstyleOfOwner int
 	//statement of game
 	//0 - not started yet
 	//1 - game just started , question =1
@@ -75,14 +82,17 @@ type Manager struct {
 	beforeGameLeave      chan bool
 	//channel to start gmae before all connnections are established
 	forcedStartOfGame chan bool
+	//channel to update time left for question
+	updateTime chan bool
 }
 
 //constructor
 
-func NewManager(roomID string, numberOfPlayers, amountOfQuestions int, questions []types.Question) *Manager {
+func NewManager(owner, roomID string, playstyle, numberOfPlayers, amountOfQuestions int, questions []types.Question) *Manager {
 	ctx, cancel := context.WithCancel(context.Background())
 	manager := &Manager{
-
+		owner:                    owner,
+		playstyleOfOwner:         playstyle,
 		roomID:                   roomID,
 		maxPlayers:               numberOfPlayers,
 		numberOfQuestions:        amountOfQuestions,
@@ -107,13 +117,14 @@ func NewManager(roomID string, numberOfPlayers, amountOfQuestions int, questions
 		beforeGameConnection:     make(chan bool),
 		beforeGameLeave:          make(chan bool),
 		forcedStartOfGame:        make(chan bool),
+		updateTime:               make(chan bool),
 	}
 	go manager.Writer()
 	go manager.ClientsStatusHandler()
 	go manager.QuestionHandler()
 	go manager.WaitListHandler()
 	go manager.StartGame()
-
+	log.Println("manager : ", manager)
 	return manager
 }
 
@@ -238,35 +249,19 @@ func (m *Manager) NewConnection(c *gin.Context) {
 			if client.isReady {
 				m.overwriteListCh <- client.userName
 			} else {
-				if m.gameState == 2 {
-					m.mu.Lock()
-					_, ok := m.clientsMap[client.userName]
-					m.mu.Unlock()
-					if !ok {
-						return
-					}
-				}
 				m.addClientToWaitList <- client
 				m.overwriteQuestionCh <- client.userName
 			}
 			log.Println("added new client who was in game before")
 
 		} else {
-			if m.gameState == 2 {
-				m.mu.Lock()
-				_, ok := m.clientsMap[client.userName]
-				m.mu.Unlock()
-				if !ok {
-					return
-				}
-				m.addClientToWaitList <- client
-				m.overwriteQuestionCh <- client.userName
-				log.Println("added new client")
-				log.Println("started goroutine for new client : ", client.userName)
-			}
+			m.addClientToWaitList <- client
+			m.overwriteQuestionCh <- client.userName
+			log.Println("added new client")
+			log.Println("started goroutine for new client : ", client.userName)
 		}
-
 	}
+
 }
 
 //function to handle writing to players
@@ -290,7 +285,6 @@ func (m *Manager) Writer() {
 				return
 			}
 			m.mu.Lock()
-
 			//writing the question for all players
 			for _, client := range m.clientsMap {
 				// m.waitList = append(m.waitList, client.userName)
@@ -541,9 +535,9 @@ func (m *Manager) StartGame() {
 		close(m.startGameCh)
 		close(m.beforeGameConnection)
 		close(m.beforeGameLeave)
+		close(m.forcedStartOfGame)
 	}()
 	for {
-
 		select {
 		//case to handle connection
 		case <-m.beforeGameConnection:
@@ -559,13 +553,7 @@ func (m *Manager) StartGame() {
 			length := len(m.clientsMap)
 			m.mu.Unlock()
 			//checking if lobby is full
-			//if yes than start game and overwrite waitList
 			if length == m.maxPlayers {
-				m.mu.Lock()
-				for _, client := range m.clientsMap {
-					m.waitList = append(m.waitList, client.userName)
-				}
-				m.mu.Unlock()
 				m.startGameCh <- true
 				m.changeQuestionCh <- true
 				m.gameState = 1
@@ -586,7 +574,11 @@ func (m *Manager) StartGame() {
 			m.mu.Unlock()
 			log.Println("deleted connection from before game state ,current list : ", listOfPlayers)
 		case <-m.forcedStartOfGame:
-
+			log.Println("force start of game ")
+			m.startGameCh <- true
+			m.changeQuestionCh <- true
+			m.gameState = 1
+			return
 		}
 	}
 }
