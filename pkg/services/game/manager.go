@@ -5,6 +5,7 @@ import (
 	"log"
 	"sort"
 	"sync"
+	"time"
 
 	"github.com/Megidy/k/types"
 	"github.com/gin-gonic/gin"
@@ -45,6 +46,8 @@ type Manager struct {
 	cancel context.CancelFunc
 	//number of current question
 	numberOfCurrentQuestion int
+	//current time of question
+	currTime int
 	//questions
 	questions []types.Question
 	//curr question
@@ -82,8 +85,12 @@ type Manager struct {
 	beforeGameLeave      chan bool
 	//channel to start gmae before all connnections are established
 	forcedStartOfGame chan bool
-	//channel to update time left for question
-	updateTime chan bool
+	//channel to update time
+	writeTimeCh chan bool
+	//channel to update time for clients who just connected
+	overwriteTimeCh chan *Client
+	//channel to restart timer in case if all clients is ready
+	restartTimeCh chan bool
 }
 
 //constructor
@@ -96,6 +103,7 @@ func NewManager(owner, roomID string, playstyle, numberOfPlayers, amountOfQuesti
 		roomID:                   roomID,
 		maxPlayers:               numberOfPlayers,
 		numberOfQuestions:        amountOfQuestions,
+		currTime:                 10,
 		questions:                questions,
 		mu:                       sync.Mutex{},
 		ctx:                      ctx,
@@ -117,7 +125,9 @@ func NewManager(owner, roomID string, playstyle, numberOfPlayers, amountOfQuesti
 		beforeGameConnection:     make(chan bool),
 		beforeGameLeave:          make(chan bool),
 		forcedStartOfGame:        make(chan bool),
-		updateTime:               make(chan bool),
+		writeTimeCh:              make(chan bool),
+		overwriteTimeCh:          make(chan *Client),
+		restartTimeCh:            make(chan bool),
 	}
 	go manager.Writer()
 	go manager.ClientsStatusHandler()
@@ -251,12 +261,18 @@ func (m *Manager) NewConnection(c *gin.Context) {
 			} else {
 				m.addClientToWaitList <- client
 				m.overwriteQuestionCh <- client.userName
+				if m.gameState != 0 {
+					m.overwriteTimeCh <- client
+				}
 			}
 			log.Println("added new client who was in game before")
 
 		} else {
 			m.addClientToWaitList <- client
 			m.overwriteQuestionCh <- client.userName
+			if m.gameState != 0 {
+				m.overwriteTimeCh <- client
+			}
 			log.Println("added new client")
 			log.Println("started goroutine for new client : ", client.userName)
 		}
@@ -315,11 +331,7 @@ func (m *Manager) Writer() {
 			}
 			m.mu.Lock()
 			//writing question for player who connected and is ready
-			client, ok := m.clientsMap[username]
-			if !ok {
-				log.Println("error when getting client : ", username)
-				break
-			}
+			client := m.clientsMap[username]
 			client.isReady = false
 			client.currQuestion = m.numberOfCurrentQuestion
 			client.questionCh <- m.currentQuestion
@@ -342,7 +354,7 @@ func (m *Manager) Writer() {
 				return
 			}
 			m.mu.Lock()
-			//writing leaderboadr to all connected players
+			//writing leaderboard to all connected players
 			for _, client := range m.clientsMap {
 				client.leaderBoardCh <- players
 			}
@@ -351,6 +363,15 @@ func (m *Manager) Writer() {
 			//calling context cancle func which will end end all goroutines and which will close all channels
 			m.cancel()
 			return
+		case <-m.writeTimeCh:
+			m.mu.Lock()
+			for _, client := range m.clientsMap {
+				client.timeWriterCh <- m.currTime
+			}
+			m.mu.Unlock()
+
+		case client := <-m.overwriteTimeCh:
+			client.timeWriterCh <- m.currTime
 		}
 	}
 }
@@ -519,6 +540,9 @@ func (m *Manager) QuestionHandler() {
 				m.numberOfCurrentQuestion++
 				m.currentQuestion = m.questions[m.numberOfCurrentQuestion]
 				log.Println("current question : ", m.currentQuestion)
+				if m.currTime > 0 {
+					m.restartTimeCh <- true
+				}
 				m.changeQuestionCh <- true
 			}
 
@@ -557,6 +581,7 @@ func (m *Manager) StartGame() {
 				m.startGameCh <- true
 				m.changeQuestionCh <- true
 				m.gameState = 1
+				go m.TimeHandler()
 				return
 			}
 			log.Println("addded connection to before game state ,current list : ", listOfPlayers)
@@ -578,7 +603,52 @@ func (m *Manager) StartGame() {
 			m.startGameCh <- true
 			m.changeQuestionCh <- true
 			m.gameState = 1
+			go m.TimeHandler()
 			return
 		}
+	}
+}
+
+// function to handle time updates
+
+func (m *Manager) TimeHandler() {
+	ticker := time.NewTicker(time.Second * 1)
+	defer func() {
+		ticker.Stop()
+	}()
+	var count int = 10
+	for {
+		select {
+		case <-m.ctx.Done():
+			return
+		case <-ticker.C:
+			count--
+			if count == 0 {
+				//dont forget to overwrite waitlist
+				count = 10
+				m.currTime = count
+
+				var tempWaitList []string
+				m.mu.Lock()
+				for username := range m.clientsMap {
+					tempWaitList = append(tempWaitList, username)
+				}
+				m.mu.Unlock()
+				m.waitList = tempWaitList
+
+				m.updateQuestionCh <- true
+				m.writeTimeCh <- true
+			} else {
+				m.currTime = count
+				log.Println("tick : ", count)
+				m.writeTimeCh <- true
+			}
+		case <-m.restartTimeCh:
+			ticker.Reset(time.Second * 1)
+			count = 10
+			m.currTime = count
+			m.writeTimeCh <- true
+		}
+
 	}
 }
