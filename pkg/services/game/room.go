@@ -9,7 +9,7 @@ import (
 
 // temporary
 type RoomManager struct {
-	mu            sync.Mutex
+	mu            sync.RWMutex
 	rooms         map[string]*Manager
 	listOfPlayers map[*Manager][]string
 }
@@ -19,18 +19,18 @@ var globalRoomManager = &RoomManager{
 	listOfPlayers: make(map[*Manager][]string),
 }
 
-func (rm *RoomManager) CreateRoom(roomID string, numberOfPlayers, amountOfQuestions int, questions []types.Question) {
+func (rm *RoomManager) CreateRoom(owner, roomID string, numberOfPlayers, playstyleOfOwner, amountOfQuestions int, questions []types.Question) {
 
-	manager := NewManager(roomID, numberOfPlayers, amountOfQuestions, questions)
+	manager := NewManager(owner, roomID, playstyleOfOwner, numberOfPlayers, amountOfQuestions, questions)
 	rm.mu.Lock()
 	rm.rooms[roomID] = manager
 	rm.mu.Unlock()
 }
 
 func (rm *RoomManager) GetManager(roomID string) (*Manager, bool) {
-	rm.mu.Lock()
+	rm.mu.RLock()
 	manager, exists := rm.rooms[roomID]
-	rm.mu.Unlock()
+	rm.mu.RUnlock()
 	return manager, exists
 }
 
@@ -41,10 +41,10 @@ func (rm *RoomManager) EndRoomSession(roomID string) {
 }
 
 func (rm *RoomManager) AddConnectionToList(manager *Manager, username string) {
-	rm.mu.Lock()
+	rm.mu.RLock()
 
 	list := rm.listOfPlayers[manager]
-	rm.mu.Unlock()
+	rm.mu.RUnlock()
 	list = append(list, username)
 	rm.mu.Lock()
 	rm.listOfPlayers[manager] = list
@@ -52,9 +52,9 @@ func (rm *RoomManager) AddConnectionToList(manager *Manager, username string) {
 	log.Println("added connetion to global room manager")
 }
 func (rm *RoomManager) DeleteConnectionFromList(manager *Manager, username string) {
-	rm.mu.Lock()
+	rm.mu.RLock()
 	list := rm.listOfPlayers[manager]
-	rm.mu.Unlock()
+	rm.mu.RUnlock()
 	for index, value := range list {
 		if value == username {
 			list = append(list[:index], list[index+1:]...)
@@ -66,9 +66,9 @@ func (rm *RoomManager) DeleteConnectionFromList(manager *Manager, username strin
 	log.Println("deleted connetion from global room manager")
 }
 func (rm *RoomManager) CheckDuplicate(manager *Manager, username string) bool {
-	rm.mu.Lock()
+	rm.mu.RLock()
 	list := rm.listOfPlayers[manager]
-	rm.mu.Unlock()
+	rm.mu.RUnlock()
 	for _, value := range list {
 		if value == username {
 			return true
