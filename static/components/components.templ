@@ -26,7 +26,21 @@ templ LeaderBoard(players []types.Player) {
 	<div hx-swap-oob="innerHTML:#leaderboard">
 		<ul>
 			for index,player:=range players {
-				<li>{ fmt.Sprintf("%d",index+1) } :  username: { player.Username } , points of the { player.Username } are { fmt.Sprintf("%d",player.Score) }</li>
+				if index < 5 {
+					<li>{ fmt.Sprintf("%d", index+1) } : username: { player.Username }, points of the { player.Username } are { fmt.Sprintf("%d", player.Score) }</li>
+				}
+			}
+		</ul>
+	</div>
+}
+
+templ SpectatorsLeaderBoard(players []types.Player) {
+	<div hx-swap-oob="innerHTML:#innerLeaderboard">
+		<ul>
+			for index,player:=range players {
+				if index < 5 {
+					<li>{ fmt.Sprintf("%d", index+1) } : username: { player.Username }, points of the { player.Username } are { fmt.Sprintf("%d", player.Score) }</li>
+				}
 			}
 		</ul>
 	</div>
@@ -45,8 +59,8 @@ templ Waiting(usernames []string) {
 	</div>
 }
 
-templ Spectator(usernames []string, leaderBoard []types.Player) {
-	<div hx-swap-oob="innerHTML:#spectator">
+templ SpectatorWaitList(usernames []string) {
+	<div hx-swap-oob="innerHTML:#currNotReadyPlayers">
 		<p>didn't comlete question yet : </p>
 		<ul>
 			for _,username:=range usernames {
@@ -55,12 +69,22 @@ templ Spectator(usernames []string, leaderBoard []types.Player) {
 				</li>
 			}
 		</ul>
-		<p>current leaderboard: </p>
+	</div>
+}
+
+templ SpectatorQuestion(question types.Question) {
+	<div hx-swap-oob="innerHTML:#currQuestion">
+		<p>current question : { question.Question }</p>
+		if question.Type=="image" {
+			<img src={ question.ImageLink }/>
+		}
+		<p>Answers : </p>
 		<ul>
-			for index,player:=range leaderBoard {
-				<li>{ fmt.Sprintf("%d",index+1) } :  username: { player.Username } , points of the { player.Username } are { fmt.Sprintf("%d",player.Score) }</li>
+			for _ ,answer :=range question.Answers {
+				<li>{ answer }</li>
 			}
 		</ul>
+		<p>Right answer is : { question.CorrectAnswer }</p>
 	</div>
 }
 
