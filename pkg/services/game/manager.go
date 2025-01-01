@@ -189,6 +189,7 @@ func (m *Manager) AddClientToConnectionPool(client *Client) bool {
 		wasInGameBefore = false
 	}
 	//than adding this user to map
+	client.isOnline = true
 	m.clientsMap[client.userName] = client
 	log.Println("Added new client to connection pool : ", client.userName)
 	m.mu.Unlock()
@@ -208,10 +209,9 @@ func (m *Manager) DeleteClientFromConnectionPool(client *Client) {
 	m.removeClientFromWaitList <- client
 	//checking if game is started , if yes than setting him to stockMap
 	//purpose of this check , if players leaves before game started it will make errors
-	if m.gameState == 1 || m.gameState == 2 {
-		m.stockMap[client.userName] = client
-	}
-
+	m.stockMap[client.userName] = client
+	//setting online status as false ,because client leaved
+	client.isOnline = false
 	delete(m.clientsMap, client.userName)
 	log.Println("deleted from clientsMap username : ", client.userName)
 	m.mu.Unlock()
@@ -249,32 +249,38 @@ func (m *Manager) NewConnection(c *gin.Context) {
 
 	// channel for waiting start of the game
 	<-m.startGameCh
-
 	//purpose of this check : handle updates in render ONLY if game is started, because it could occur error
-	if m.gameState == 1 || m.gameState == 2 {
+	if m.gameState != 0 {
 		//checking if player was in game before
 		//if he was in game before than checking if he is already answered question and render for him waitList, if not than render question
 		//if he wasnt in game before than writing him questions and also adding to waitList to update for all plyers
 		if wasInGameBefore {
-			if client.isReady {
-				m.overwriteListCh <- client.userName
-			} else {
+			//checking if client is online to prevent writing to not established connections
+			if client.isOnline {
+				if client.isReady {
+					m.overwriteListCh <- client.userName
+				} else {
+					m.addClientToWaitList <- client
+					m.overwriteQuestionCh <- client.userName
+					if m.gameState != 0 {
+						m.overwriteTimeCh <- client
+					}
+				}
+				log.Println("added new client who was in game before")
+			}
+
+		} else {
+			//checking if client is online to prevent writing to not established connections
+			if client.isOnline {
 				m.addClientToWaitList <- client
 				m.overwriteQuestionCh <- client.userName
 				if m.gameState != 0 {
 					m.overwriteTimeCh <- client
 				}
+				log.Println("added new client")
+				log.Println("started goroutine for new client : ", client.userName)
 			}
-			log.Println("added new client who was in game before")
 
-		} else {
-			m.addClientToWaitList <- client
-			m.overwriteQuestionCh <- client.userName
-			if m.gameState != 0 {
-				m.overwriteTimeCh <- client
-			}
-			log.Println("added new client")
-			log.Println("started goroutine for new client : ", client.userName)
 		}
 	}
 
@@ -461,7 +467,7 @@ func (m *Manager) WaitListHandler() {
 			// there are 1 player left and he leaves, len(m.waitList) == 0 so this will go the next question
 			if len(m.waitList) == 0 && length != 0 {
 				//checking if game is started
-				if m.gameState == 1 || m.gameState == 2 {
+				if m.gameState != 0 {
 					m.mu.Lock()
 					//looping througn the client map to fill the waitList
 					for username := range m.clientsMap {
@@ -474,7 +480,7 @@ func (m *Manager) WaitListHandler() {
 
 			} else {
 				//checking if game is started
-				if m.gameState == 1 || m.gameState == 2 {
+				if m.gameState != 0 {
 					//updating list
 					m.changeListCh <- true
 				}
