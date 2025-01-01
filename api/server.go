@@ -33,7 +33,7 @@ func (s *Server) Run() error {
 	//initializing of handlers
 
 	//initialization of auth Service
-	authHandler := auth.NewJWT(userStore)
+	authHandler := auth.NewHandler(userStore)
 	//clientSideHandler
 	clientSideHandler := client.NewClientSideHandler()
 

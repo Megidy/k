@@ -124,8 +124,8 @@ func (h *gameHandler) HandleGame(c *gin.Context) {
 		game.Game(roomID, true, true, false, false).Render(c.Request.Context(), c.Writer)
 		return
 	} else {
-		if m.ownersName == user.UserName {
-			if m.playstyleOfOwner == 2 {
+		if m.owner.username == user.UserName {
+			if m.owner.playStyle == 2 {
 				log.Println("spectating")
 				game.Game(roomID, false, true, true, true).Render(c.Request.Context(), c.Writer)
 			} else {
@@ -138,9 +138,7 @@ func (h *gameHandler) HandleGame(c *gin.Context) {
 		}
 
 	}
-
 }
-
 func (h *gameHandler) HandleWSConnectionForGame(c *gin.Context) {
 	roomID := c.Param("roomID")
 	log.Println("room id : ", roomID)
