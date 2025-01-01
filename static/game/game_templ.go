@@ -44,13 +44,26 @@ func Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSp
 		} else {
 			if isOwner {
 				if isSpectator {
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("         ")
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div hx-ext=\"ws\" ws-connect=\"")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var2 string
+					templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/ws/game/handler/%s", roomID))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/game/game.templ`, Line: 21, Col: 77}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" ws-reconnect-delay=\"10000\"><div id=\"leaderboard\"><div id=\"time\"><div id=\"spectator\"><p>You are spectating , so you can't play , just watch the current results </p><button type=\"submit\" ws-send>force start</button><div id=\"beforeGameWait\"></div></div></div><div id=\"innerLeaderboard\"></div><div id=\"currQuestion\"></div><div id=\"currNotReadyPlayers\"></div></div></div>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				} else {
 					if isAlreadyPlaying {
-						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div>You are already playing this game,so you can't answer twice :((</div>")
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div>If you are trying to reconect with page reloading , try one more time , if it didnt help ,that means than you have already opened page with this game! </div>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
@@ -59,12 +72,12 @@ func Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSp
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						var templ_7745c5c3_Var2 string
-						templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/ws/game/handler/%s", roomID))
+						var templ_7745c5c3_Var3 string
+						templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/ws/game/handler/%s", roomID))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/game/game.templ`, Line: 35, Col: 78}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/game/game.templ`, Line: 39, Col: 78}
 						}
-						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
@@ -76,7 +89,7 @@ func Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSp
 				}
 			} else {
 				if isAlreadyPlaying {
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div>You are already playing this game,so you can't answer twice :((</div>")
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div>If you are trying to reconect with page reloading , try one more time , if it didnt help ,that means than you have already opened page with this game! </div>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -85,12 +98,12 @@ func Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSp
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var3 string
-					templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/ws/game/handler/%s", roomID))
+					var templ_7745c5c3_Var4 string
+					templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/ws/game/handler/%s", roomID))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/game/game.templ`, Line: 51, Col: 77}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/game/game.templ`, Line: 55, Col: 77}
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
