@@ -27,6 +27,8 @@ import (
 // )
 
 type Client struct {
+	//field to prevent error with double connection before game
+	isOnline           bool
 	isReady            bool
 	ginCtx             *gin.Context
 	userName           string
@@ -39,6 +41,7 @@ type Client struct {
 	leaderBoardCh      chan []types.Player
 	beforeGameWriterCh chan []string
 	timeWriterCh       chan int
+	innerLeaderBoardCh chan []types.Player
 	currQuestion       int
 }
 
@@ -55,6 +58,7 @@ func NewClient(userName string, conn *websocket.Conn, manager *Manager, ctx *gin
 		leaderBoardCh:      make(chan []types.Player),
 		beforeGameWriterCh: make(chan []string),
 		timeWriterCh:       make(chan int),
+		innerLeaderBoardCh: make(chan []types.Player),
 	}
 }
 
@@ -86,7 +90,6 @@ func (c *Client) ReadPump() {
 		json.Unmarshal(txt, &data)
 		if data.Answer == "" && c.manager.gameState == 0 {
 			c.manager.forcedStartOfGame <- true
-
 		} else {
 			c.manager.ScoreHandler(c, &data)
 			// c.manager.HandlePointScoreness(c, data)
@@ -104,6 +107,7 @@ func (c *Client) WritePump() {
 		close(c.writeWaitCh)
 		close(c.leaderBoardCh)
 		close(c.beforeGameWriterCh)
+		close(c.timeWriterCh)
 	}()
 	for {
 		select {
@@ -156,6 +160,81 @@ func (c *Client) WritePump() {
 			}
 		case time := <-c.timeWriterCh:
 			comp := components.TimeLoader(time)
+			buffer := &bytes.Buffer{}
+			comp.Render(context.Background(), buffer)
+			err := c.conn.WriteMessage(websocket.TextMessage, buffer.Bytes())
+			if err != nil {
+				log.Println("WRITE PUMP : error when writing message: ", err)
+			}
+		}
+	}
+}
+
+func (c *Client) SpectatorsWritePump() {
+	defer func() {
+		log.Println("WRITE PUMP : exited writepump goroutine for owner : ", c.userName)
+		c.conn.Close()
+		close(c.questionCh)
+		close(c.writeWaitCh)
+		close(c.leaderBoardCh)
+		close(c.beforeGameWriterCh)
+		close(c.timeWriterCh)
+	}()
+	for {
+		select {
+		case <-c.endWriteCh:
+			return
+		case <-c.manager.ctx.Done():
+			return
+		case question := <-c.questionCh:
+			comp := components.SpectatorQuestion(question)
+			buffer := &bytes.Buffer{}
+			comp.Render(context.Background(), buffer)
+
+			err := c.conn.WriteMessage(websocket.TextMessage, buffer.Bytes())
+			if err != nil {
+				if err == websocket.ErrCloseSent {
+					log.Println("WRITE PUMP : no connection was established ")
+					return
+				}
+				log.Println("WRITE PUMP : error when writing message: ", err)
+			}
+		case list := <-c.writeWaitCh:
+			comp := components.SpectatorWaitList(list)
+			buffer := &bytes.Buffer{}
+			comp.Render(context.Background(), buffer)
+
+			err := c.conn.WriteMessage(websocket.TextMessage, buffer.Bytes())
+			if err != nil {
+				log.Println("WRITE PUMP : error when writing message: ", err)
+			}
+		case list := <-c.beforeGameWriterCh:
+			comp := components.BeforeGameWaitList(list)
+			buffer := &bytes.Buffer{}
+			comp.Render(context.Background(), buffer)
+			err := c.conn.WriteMessage(websocket.TextMessage, buffer.Bytes())
+			if err != nil {
+				log.Println("WRITE PUMP : error when writing message: ", err)
+			}
+		case time := <-c.timeWriterCh:
+			comp := components.TimeLoader(time)
+			buffer := &bytes.Buffer{}
+			comp.Render(context.Background(), buffer)
+			err := c.conn.WriteMessage(websocket.TextMessage, buffer.Bytes())
+			if err != nil {
+				log.Println("WRITE PUMP : error when writing message: ", err)
+			}
+		case players := <-c.innerLeaderBoardCh:
+			comp := components.SpectatorsLeaderBoard(players)
+			buffer := &bytes.Buffer{}
+			comp.Render(context.Background(), buffer)
+			err := c.conn.WriteMessage(websocket.TextMessage, buffer.Bytes())
+			if err != nil {
+				log.Println("WRITE PUMP : error when writing message: ", err)
+			}
+		case players := <-c.leaderBoardCh:
+			log.Println("client received")
+			comp := components.LeaderBoard(players)
 			buffer := &bytes.Buffer{}
 			comp.Render(context.Background(), buffer)
 			err := c.conn.WriteMessage(websocket.TextMessage, buffer.Bytes())
