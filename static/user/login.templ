@@ -1,31 +1,33 @@
 package user
 
+import "github.com/Megidy/k/static/components"
+
 templ Login(message string) {
-	<div class="loginClassSwap">
+	@components.TopNavBar()
+	<html>
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>Log In</title>
 			<script src="https://unpkg.com/htmx.org@1.9.2"></script>
+			<link rel="stylesheet" href="/static/css/user/login.css"/>
 		</head>
 		<body>
-			<div class="login" id="loginform">
-				<form hx-post="/account/login/confirm" hx-swap="outerHTML" hx-target=".loginClassSwap">
-					<div class="form-group">
-						<label for="email">Your Email:</label>
-						<input type="email" id="email" name="email" required/>
-					</div>
-					<div class="form-group">
-						<label for="password">Your Password:</label>
-						<input type="password" id="password" name="password" required/>
-					</div>
-					<button type="submit" class="btn">Log In</button>
-					<div><a href="/account/create" class="link">Dont have account yet?</a>.<br/></div>
-					<div class="message">
-						{ message }
-					</div>
-				</form>
+			<div class="loginClassSwap">
+				<div class="login" id="loginform">
+					<form hx-post="/account/login/confirm" hx-swap="outerHTML" hx-target=".loginClassSwap">
+						<label for="email">Your Email <i class="fa fa-envelope-o"></i> :</label>
+						<input type="email" id="email" name="email" placeholder="Your Email" required/>
+						<label for="password">Your Password <i class="fa fa-key"></i> :</label>
+						<input type="password" id="password" name="password" placeholder="password" required/>
+						<button type="submit" class="btn">Log In <i class="fa fa-sign-in"></i></button>
+						<a href="/account/create" class="link">Don't have an account yet?</a>
+						<div class="message">
+							<h>{ message }</h>
+						</div>
+					</form>
+				</div>
 			</div>
 		</body>
-	</div>
+	</html>
 }

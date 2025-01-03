@@ -8,6 +8,8 @@ package user
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
+import "github.com/Megidy/k/static/components"
+
 func Login(message string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -29,20 +31,24 @@ func Login(message string) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"loginClassSwap\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Log In</title><script src=\"https://unpkg.com/htmx.org@1.9.2\"></script></head><body><div class=\"login\" id=\"loginform\"><form hx-post=\"/account/login/confirm\" hx-swap=\"outerHTML\" hx-target=\".loginClassSwap\"><div class=\"form-group\"><label for=\"email\">Your Email:</label> <input type=\"email\" id=\"email\" name=\"email\" required></div><div class=\"form-group\"><label for=\"password\">Your Password:</label> <input type=\"password\" id=\"password\" name=\"password\" required></div><button type=\"submit\" class=\"btn\">Log In</button><div><a href=\"/account/create\" class=\"link\">Dont have account yet?</a>.<br></div><div class=\"message\">")
+		templ_7745c5c3_Err = components.TopNavBar().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<html><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Log In</title><script src=\"https://unpkg.com/htmx.org@1.9.2\"></script><link rel=\"stylesheet\" href=\"/static/css/user/login.css\"></head><body><div class=\"loginClassSwap\"><div class=\"login\" id=\"loginform\"><form hx-post=\"/account/login/confirm\" hx-swap=\"outerHTML\" hx-target=\".loginClassSwap\"><label for=\"email\">Your Email <i class=\"fa fa-envelope-o\"></i> :</label> <input type=\"email\" id=\"email\" name=\"email\" placeholder=\"Your Email\" required> <label for=\"password\">Your Password <i class=\"fa fa-key\"></i> :</label> <input type=\"password\" id=\"password\" name=\"password\" placeholder=\"password\" required> <button type=\"submit\" class=\"btn\">Log In <i class=\"fa fa-sign-in\"></i></button> <a href=\"/account/create\" class=\"link\">Don't have an account yet?</a><div class=\"message\"><h>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(message)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/user/login.templ`, Line: 25, Col: 15}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/user/login.templ`, Line: 26, Col: 19}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div></form></div></body></div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h></div></form></div></div></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
