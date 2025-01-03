@@ -1,0 +1,48 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #71b7e6, #9b59b6);
+}
+
+ul.topnav {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    justify-content: center; 
+}
+
+ul.topnav li {
+    display: inline; 
+}
+
+ul.topnav li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+ul.topnav li a:hover:not(.active) {
+    background-color: #8500f1;
+}
+
+ul.topnav li a.active {
+    background-color: #04AA6D;
+}
+
+@media screen and (max-width: 600px) {
+    ul.topnav {
+        flex-direction: column; /* Вертикальне вирівнювання на малих екранах */
+    }
+    ul.topnav li {
+        float: none;
+    }
+}
