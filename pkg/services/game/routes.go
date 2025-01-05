@@ -10,13 +10,15 @@ import (
 	"strings"
 
 	"github.com/Megidy/k/pkg/auth"
-	"github.com/Megidy/k/static/game"
-	"github.com/Megidy/k/static/room"
-	"github.com/Megidy/k/static/topic"
+	"github.com/Megidy/k/static/templates/game"
+	"github.com/Megidy/k/static/templates/room"
+	"github.com/Megidy/k/static/templates/topic"
 	"github.com/Megidy/k/types"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
+
+//TO DO prevent connection to not created room ,for example : http://localhost:8080/game/QouhbVdb/info/3/5/1
 
 type gameHandler struct {
 	clienSideHandler types.ClientSideHandler
@@ -78,6 +80,13 @@ func (h *gameHandler) ConfirmInfo(c *gin.Context) {
 
 	topic := h.clienSideHandler.GetDataFromForm(c, "topic")
 	roomID := c.Param("roomID")
+	_, ok := globalRoomManager.GetManager(roomID)
+	if ok {
+		b := make([]byte, 6)
+		rand.Read(b)
+		roomID = base64.StdEncoding.EncodeToString(b)
+		roomID = strings.ReplaceAll(roomID, "/", "d")
+	}
 	p := c.Param("players")
 	q := c.Param("questions")
 	play := c.Param("playstyle")
@@ -98,7 +107,7 @@ func (h *gameHandler) ConfirmInfo(c *gin.Context) {
 	}
 	//find question with this topic
 	log.Println("topic : ", topic)
-	questions, err := h.gameStore.GetQuestionsByTopicName(topic)
+	questions, err := h.gameStore.GetQuestionsByTopicName(topic, u.(*types.User).ID)
 	if err != nil {
 		log.Println("error when getting question from db by topic : ", err)
 		return
@@ -107,7 +116,6 @@ func (h *gameHandler) ConfirmInfo(c *gin.Context) {
 	globalRoomManager.CreateRoom(u.(*types.User).UserName, roomID, players, playstyle, numberOfQuestions, questions)
 	url := fmt.Sprintf("/game/%s", roomID)
 	c.Writer.Header().Add("HX-Redirect", url)
-	//redirect to game handler : /game/:roomID
 }
 
 func (h *gameHandler) HandleGame(c *gin.Context) {
