@@ -29,8 +29,8 @@ type ownerStruct struct {
 
 // TO DO
 // 1 create timer which will later be dependent on the time of question || HALF DONE
-// 2 if 0 connection and game is not started and noone connects for 120 seconds , than delete room
-// 3 make notifications for connection and disconnection , but this will have maybe some frontend issues ?
+// 2 if 0 connection and game is not started and noone connects for 120 seconds , than delete room ||DONE
+
 type Manager struct {
 	//owner
 	owner ownerStruct
@@ -105,11 +105,18 @@ type Manager struct {
 	updateInnerLeaderboardCh chan bool
 	//channel to write real-time leaderboard for specator
 	writeInnerLeaderboardCh chan []types.Player
+	//channel to update before game reset of ticker to prevent self-liquidation of game
+	updateBeforeGameTickerCh chan bool
+	//chennel to stop ticker
+	stopBeforeGameTickerCh chan bool
 }
 
 // constructor
 func NewManager(owner, roomID string, playstyle, numberOfPlayers, amountOfQuestions int, questions []types.Question) *Manager {
 	ctx, cancel := context.WithCancel(context.Background())
+	if amountOfQuestions > len(questions) {
+		amountOfQuestions = len(questions)
+	}
 	manager := &Manager{
 		owner:                    ownerStruct{username: owner, playStyle: playstyle},
 		roomID:                   roomID,
@@ -143,12 +150,16 @@ func NewManager(owner, roomID string, playstyle, numberOfPlayers, amountOfQuesti
 		restartTimeCh:            make(chan bool),
 		updateInnerLeaderboardCh: make(chan bool),
 		writeInnerLeaderboardCh:  make(chan []types.Player),
+		updateBeforeGameTickerCh: make(chan bool),
+		stopBeforeGameTickerCh:   make(chan bool),
 	}
 	go manager.Writer()
 	go manager.ClientsStatusHandler()
 	go manager.QuestionHandler()
 	go manager.WaitListHandler()
 	go manager.StartGame()
+	go manager.BeforeGameLiquidationHandler()
+
 	log.Println("manager : ", manager)
 	return manager
 }
@@ -312,6 +323,9 @@ func (m *Manager) WriteDataWithConnection(client *Client, wasInGameBefore bool) 
 				if client.isOnline {
 					if client.isReady {
 						m.overwriteListCh <- client.userName
+						if m.gameState != 0 {
+							m.overwriteTimeCh <- client
+						}
 					} else {
 						m.addClientToWaitList <- client
 						m.overwriteQuestionCh <- client.userName
@@ -767,10 +781,12 @@ func (m *Manager) StartGame() {
 			if length == m.maxPlayers {
 				m.startGameCh <- true
 				m.writeQuestionCh <- true
+				m.stopBeforeGameTickerCh <- true
 				m.gameState = 1
-				go m.TimeHandler()
+				go m.GameTimeHandler()
 				return
 			}
+			m.updateBeforeGameTickerCh <- true
 			log.Println("addded connection to before game state ,current list : ", listOfPlayers)
 		//case to handle client leave
 		case <-m.beforeGameLeave:
@@ -794,15 +810,16 @@ func (m *Manager) StartGame() {
 			log.Println("force start of game ")
 			m.startGameCh <- true
 			m.writeQuestionCh <- true
+			m.stopBeforeGameTickerCh <- true
 			m.gameState = 1
-			go m.TimeHandler()
+			go m.GameTimeHandler()
 			return
 		}
 	}
 }
 
 // function to handle time updates
-func (m *Manager) TimeHandler() {
+func (m *Manager) GameTimeHandler() {
 	ticker := time.NewTicker(time.Second * 1)
 	defer func() {
 		ticker.Stop()
@@ -832,7 +849,6 @@ func (m *Manager) TimeHandler() {
 				m.writeTimeCh <- true
 			} else {
 				m.currTime = count
-				log.Println("tick : ", count)
 				m.writeTimeCh <- true
 			}
 		case <-m.restartTimeCh:
@@ -840,6 +856,33 @@ func (m *Manager) TimeHandler() {
 			count = 10
 			m.currTime = count
 			m.writeTimeCh <- true
+		}
+
+	}
+}
+
+func (m *Manager) BeforeGameLiquidationHandler() {
+	ticker := time.NewTicker(time.Second * 1)
+	counter := 360
+	defer func() {
+		log.Println("room will not liquidate itself :)")
+		ticker.Stop()
+		close(m.updateBeforeGameTickerCh)
+		close(m.stopBeforeGameTickerCh)
+	}()
+	for {
+		select {
+		case <-m.updateBeforeGameTickerCh:
+			ticker.Reset(time.Second)
+			counter = 360
+		case <-ticker.C:
+			counter--
+			if counter == 0 {
+				m.cancel()
+				return
+			}
+		case <-m.stopBeforeGameTickerCh:
+			return
 		}
 
 	}
