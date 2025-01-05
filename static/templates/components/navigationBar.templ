@@ -1,0 +1,35 @@
+package components
+
+templ TopNavBar() {
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<link rel="stylesheet" href="/static/css/components/topbar.css"/>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+	</head>
+	<body>
+		<ul class="topnav" id="myTopnav">
+			<li class="icon">
+				<a href="javascript:void(0);" class="toggle-button" onclick="toggleMenu()">
+					<i class="fa fa-bars"></i>
+				</a>
+			</li>
+			<li><a href="#home">Home</a></li>
+			<li><a href="/room/connect"><i class="fa fa-plug"></i> Connect to game</a></li>
+			<li><a href="/room/create"><i class="fa fa-plus"></i> Create game</a></li>
+			<li><a href="/topic/create"><i class="fa fa-pencil"></i> Create topic</a></li>
+			<li><a href="#about"><i class="fa fa-book"></i> About</a></li>
+			<li><a class="account" href="#account">Account</a></li>
+		</ul>
+		<script>
+        function toggleMenu() {
+    const nav = document.getElementById("myTopnav");
+    if (nav.className === "topnav") {
+        nav.className += " responsive"; // Додаємо клас для активації стилів згортання
+    } else {
+        nav.className = "topnav"; // Повертаємо до початкового стану
+    }
+}
+        </script>
+		{ children... }
+	</body>
+}

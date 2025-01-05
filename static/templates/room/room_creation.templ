@@ -1,5 +1,7 @@
 package room
 
+import "github.com/Megidy/k/static/templates/components"
+
 templ LoadCreationOfRoom() {
 	<head>
 		<meta charset="UTF-8"/>
@@ -8,6 +10,7 @@ templ LoadCreationOfRoom() {
 		<title>Create Room</title>
 	</head>
 	<body>
+	@components.TopNavBar()
 		<div class="room">
 			<form hx-post="/room/create/confirm">
 				<div class="form-group">

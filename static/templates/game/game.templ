@@ -16,6 +16,7 @@ templ Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isS
 		if !isFound {
 			<div>game in which you are trying to connect was finished or doesnt exists :((</div>
 		} else {
+			<div> Game ID : {roomID}</div>
 			if isOwner {
 				if isSpectator {
 					<div hx-ext="ws" ws-connect={ fmt.Sprintf("/ws/game/handler/%s", roomID) } ws-reconnect-delay="10000">
