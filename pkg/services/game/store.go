@@ -1,23 +1,28 @@
 package game
 
 import (
+	"context"
 	"database/sql"
+	"encoding/json"
 	"log"
+	"time"
 
 	"github.com/Megidy/k/types"
+	"github.com/redis/go-redis/v9"
 )
 
 type store struct {
-	db *sql.DB
+	sqlDB   *sql.DB
+	redisDB *redis.Client
 }
 
-func NewGameStore(db *sql.DB) *store {
-	return &store{db: db}
+func NewGameStore(sqlDB *sql.DB, redisDB *redis.Client) *store {
+	return &store{sqlDB: sqlDB, redisDB: redisDB}
 }
 
 func (s *store) CreateTopic(questions []types.Question, userID string) error {
 	topic := questions[0].Topic
-	_, err := s.db.Exec("insert into topics values(?,?,?)", topic.TopicID, userID, topic.Name)
+	_, err := s.sqlDB.Exec("insert into topics values(?,?,?)", topic.TopicID, userID, topic.Name)
 	if err != nil {
 		log.Println("error occured in topics : ", err)
 		return err
@@ -25,13 +30,13 @@ func (s *store) CreateTopic(questions []types.Question, userID string) error {
 	}
 	for _, question := range questions {
 
-		_, err = s.db.Exec("insert into questions values(?,?,?,?,?,?)", question.Id, question.Topic.TopicID, question.Type, question.ImageLink, question.Question, question.CorrectAnswer)
+		_, err = s.sqlDB.Exec("insert into questions values(?,?,?,?,?,?)", question.Id, question.Topic.TopicID, question.Type, question.ImageLink, question.Question, question.CorrectAnswer)
 		if err != nil {
 			log.Println("error occured in questions : ", err)
 			return err
 		}
 		for _, answer := range question.Answers {
-			_, err = s.db.Exec("insert into answers values(?,?)", question.Id, answer)
+			_, err = s.sqlDB.Exec("insert into answers values(?,?)", question.Id, answer)
 			if err != nil {
 				log.Println("error occured in answers : ", err)
 				return err
@@ -44,7 +49,24 @@ func (s *store) CreateTopic(questions []types.Question, userID string) error {
 
 func (s *store) GetUsersTopics(userID string) ([]types.Topic, error) {
 	var topics []types.Topic
-	rows, err := s.db.Query("select * from topics where user_id=?", userID)
+	ctx := context.Background()
+	cacheKey := "user:" + userID + ":topics_name:"
+	data, err := s.redisDB.Get(ctx, cacheKey).Result()
+	if err != nil {
+		if err == redis.Nil {
+			log.Println("no cache was found , querying from sql db")
+		} else {
+			return nil, err
+		}
+	} else {
+		err := json.Unmarshal([]byte(data), &topics)
+		if err != nil {
+			return nil, err
+		}
+		log.Println("cache found")
+		return topics, nil
+	}
+	rows, err := s.sqlDB.Query("select * from topics where user_id=?", userID)
 	if err != nil {
 		return nil, err
 	}
@@ -56,13 +78,39 @@ func (s *store) GetUsersTopics(userID string) ([]types.Topic, error) {
 		}
 		topics = append(topics, t)
 	}
-
+	if len(topics) > 0 {
+		data, err := json.Marshal(topics)
+		if err != nil {
+			return nil, err
+		}
+		err = s.redisDB.Set(ctx, cacheKey, data, time.Minute*10).Err()
+		if err != nil {
+			return nil, err
+		}
+	}
 	return topics, nil
 }
 
-func (s *store) GetQuestionsByTopicName(TopicName string) ([]types.Question, error) {
+func (s *store) GetQuestionsByTopicName(TopicName string, userID string) ([]types.Question, error) {
 	var questions []types.Question
-	row, err := s.db.Query("select * from topics where name=?", TopicName)
+	ctx := context.Background()
+	cacheKey := "user:" + userID + ":questions_of_topic:" + TopicName
+	data, err := s.redisDB.Get(ctx, cacheKey).Result()
+	if err != nil {
+		if err == redis.Nil {
+			log.Println("no cache was found , querying from sql db")
+		} else {
+			return nil, err
+		}
+	} else {
+		err := json.Unmarshal([]byte(data), &questions)
+		if err != nil {
+			return nil, err
+		}
+		log.Println("cache found")
+		return questions, nil
+	}
+	row, err := s.sqlDB.Query("select * from topics where name=? and user_id=?", TopicName, userID)
 	if err != nil {
 		log.Println("error with topics")
 		return nil, err
@@ -76,7 +124,7 @@ func (s *store) GetQuestionsByTopicName(TopicName string) ([]types.Question, err
 		}
 	}
 
-	rows, err := s.db.Query("select id,type,image_link,question,correct_answer from questions where topic_id=?", t.TopicID)
+	rows, err := s.sqlDB.Query("select id,type,image_link,question,correct_answer from questions where topic_id=?", t.TopicID)
 	if err != nil {
 		log.Println("error with questions")
 		return nil, err
@@ -89,7 +137,7 @@ func (s *store) GetQuestionsByTopicName(TopicName string) ([]types.Question, err
 		if err != nil {
 			return nil, err
 		}
-		rows, err := s.db.Query("select answer from answers where question_id=?", q.Id)
+		rows, err := s.sqlDB.Query("select answer from answers where question_id=?", q.Id)
 		if err != nil {
 			log.Println("error with answers ")
 			return nil, err
@@ -104,6 +152,16 @@ func (s *store) GetQuestionsByTopicName(TopicName string) ([]types.Question, err
 			q.Answers = append(q.Answers, a)
 		}
 		questions = append(questions, q)
+	}
+	if len(questions) > 0 {
+		data, err := json.Marshal(questions)
+		if err != nil {
+			return nil, err
+		}
+		err = s.redisDB.Set(ctx, cacheKey, data, time.Minute*40).Err()
+		if err != nil {
+			return nil, err
+		}
 	}
 	return questions, nil
 }
