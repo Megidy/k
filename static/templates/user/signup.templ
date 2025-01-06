@@ -1,35 +1,35 @@
 package user
 
+import "github.com/Megidy/k/static/templates/components"
+
 templ Signup(message string) {
-	<div class="signUpClass">
+	@components.TopNavBar()
+	<html>
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>Sign Up</title>
+			<link rel="stylesheet" href="/static/css/user/register.css"/>
 			<script src="https://unpkg.com/htmx.org@1.9.2"></script>
 		</head>
 		<body>
-			<div class="signup">
-				<form hx-post="/account/create/confirm" hx-swap="outerHTML" hx-target=".signUpClass">
-					<div class="form-group">
-						<label for="username">Your User Name:</label>
-						<input type="text" id="username" name="username" required/>
-					</div>
-					<div class="form-group">
-						<label for="email">your Email:</label>
-						<input type="email" id="email" name="email" required/>
-					</div>
-					<div class="form-group">
-						<label for="password">your super-puper secret Password:</label>
-						<input type="password" id="password" name="password" required/>
-					</div>
-					<button type="submit" class="btn">Sign Up <i class="fa fa-sign-in" aria-hidden="true"></i></button>
-					<div><a href="/account/login">Already have an account?</a><br/></div>
-					<div class="message">
-						{ message }
-					</div>
-				</form>
+			<div class="signUpClass">
+				<div class="signup">
+					<form hx-post="/account/create/confirm" hx-swap="outerHTML" hx-target=".signUpClass">
+						<label for="username">Your Username <i class="fa fa-address-card-o"></i> :</label>
+						<input type="text" id="username" name="username" placeholder="Your Username" required/>
+						<label for="email">Your Email <i class="fa fa-envelope-o"></i> :</label>
+						<input type="email" id="email" name="email" placeholder="Your Email" required/>
+						<label for="password">Your Password <i class="fa fa-key"></i> :</label>
+						<input type="password" id="password" name="password" placeholder="password" required/>
+						<button type="submit" class="btn">Sign Up <i class="fa fa-sign-in" aria-hidden="true"></i></button>
+						<div><a href="/account/login" class="link">Already have an account?</a><br/></div>
+						<div class="message">
+							{ message }
+						</div>
+					</form>
+				</div>
 			</div>
 		</body>
-	</div>
+	</html>
 }
