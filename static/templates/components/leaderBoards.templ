@@ -1,0 +1,28 @@
+package components
+import (
+	"fmt"
+	"github.com/Megidy/k/types"
+)
+templ LeaderBoard(players []types.Player) {
+	<div hx-swap-oob="innerHTML:#leaderboard">
+		<ul>
+			for index,player:=range players {
+				if index < 5 {
+					<li>{ fmt.Sprintf("%d", index+1) } : username: { player.Username }, points of the { player.Username } are { fmt.Sprintf("%d", player.Score) }</li>
+				}
+			}
+		</ul>
+	</div>
+}
+
+templ SpectatorsLeaderBoard(players []types.Player) {
+	<div hx-swap-oob="innerHTML:#innerLeaderboard">
+		<ul>
+			for index,player:=range players {
+				if index < 5 {
+					<li>{ fmt.Sprintf("%d", index+1) } : username: { player.Username }, points of the { player.Username } are { fmt.Sprintf("%d", player.Score) }</li>
+				}
+			}
+		</ul>
+	</div>
+}
