@@ -6,56 +6,64 @@ body {
     height: 100vh;
     margin: 0;
     flex-direction: column;
+    background-color: #f4f4f9;
 }
 
 .loginClassSwap {
-    margin-top: 60px; /* Додаємо відступ зверху, щоб не перекривати TopNavBar */
+    margin-top: 80px;
 }
 
 .login {
     background-color: #E8FAF9;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    width: 300px;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    width: 90%; /* Adjust width to be responsive */
+    max-width: 400px; /* Set a maximum width */
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
 }
 
 .login label {
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: 10px; 
     font-weight: bold;
+    font-size: 1.2em;
 }
 
 .login input[type="email"],
 .login input[type="password"] {
     width: 100%;
-    padding: 8px;
-    margin-bottom: 16px;
+    padding: 12px;
+    margin-bottom: 20px;
     background-color: #E8FAF9;
     border: 1px solid #BBADDB;
-    border-radius: 6px;
+    border-radius: 8px;
+    font-size: 1.1em;
 }
 
 .login button.btn {
     width: 100%;
-    padding: 10px;
+    padding: 14px;
     background-color: #9564BC;
     color: #fff;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
+    font-size: 1.2em;
     cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
 .login button.btn:hover {
-    background-color: #0056b3;
+    background-color: #7c51a1;
 }
 
 .login a.link {
     display: block;
     text-align: center;
-    margin-top: 16px;
+    margin-top: 20px;
     color: #007bff;
     text-decoration: none;
+    font-size: 1.1em;
 }
 
 .login a.link:hover {
@@ -63,7 +71,39 @@ body {
 }
 
 .message {
-    margin-top: 16px;
+    margin-top: 20px;
     color: red;
     text-align: center;
+    font-size: 1.1em;
 }
+
+/* Media query for smaller screens */
+@media screen and (max-width: 600px) {
+    .login {
+        padding: 20px; /* Adjust padding for smaller screens */
+    }
+
+    .login label {
+        font-size: 1em; /* Adjust font size for smaller screens */
+    }
+
+    .login input[type="email"],
+    .login input[type="password"] {
+        padding: 10px; /* Adjust padding for smaller screens */
+        font-size: 1em; /* Adjust font size for smaller screens */
+    }
+
+    .login button.btn {
+        padding: 12px; /* Adjust padding for smaller screens */
+        font-size: 1em; /* Adjust font size for smaller screens */
+    }
+
+    .login a.link {
+        font-size: 1em; /* Adjust font size for smaller screens */
+    }
+
+    .message {
+        font-size: 1em; /* Adjust font size for smaller screens */
+    }
+}
+
