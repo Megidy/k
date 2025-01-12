@@ -3,16 +3,19 @@ package user
 import "github.com/Megidy/k/static/templates/components"
 
 templ Login(message string) {
-	@components.TopNavBar()
+	
 	<html>
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>Log In</title>
 			<script src="https://unpkg.com/htmx.org@1.9.2"></script>
-			<link rel="stylesheet" href="/static/css/user/login.css"/>
+			<link rel="stylesheet" href="/static/css/user/login.css" />
+			
 		</head>
 		<body>
+		@components.TopNavBar()
+			<div></div>
 			<div class="loginClassSwap">
 				<div class="login" id="loginform">
 					<form hx-post="/account/login/confirm" hx-swap="outerHTML" hx-target=".loginClassSwap">
@@ -25,9 +28,11 @@ templ Login(message string) {
 						<div class="message">
 							<h>{ message }</h>
 						</div>
+						
 					</form>
 				</div>
 			</div>
 		</body>
+		@components.Footer()
 	</html>
 }
