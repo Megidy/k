@@ -8,7 +8,10 @@ package game
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/Megidy/k/static/templates/components"
+)
 
 // import "github.com/Megidy/k/static/components"
 func Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSpectator bool) templ.Component {
@@ -32,7 +35,15 @@ func Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSp
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<head><title>Game</title><script src=\"https://unpkg.com/htmx.org@1.9.8\"></script><script src=\"https://unpkg.com/htmx.org/dist/ext/multi-swap.js\"></script><script src=\"https://unpkg.com/htmx.org/dist/ext/ws.js\"></script><meta name=\"htmx-config\" content=\"{&#34;wsReconnectDelay&#34;:&#34;10&#34;}\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"></head><body>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<head><title>Game</title><script src=\"https://unpkg.com/htmx.org@1.9.8\"></script><script src=\"https://unpkg.com/htmx.org/dist/ext/multi-swap.js\"></script><script src=\"https://unpkg.com/htmx.org/dist/ext/ws.js\"></script><meta name=\"htmx-config\" content=\"{&#34;wsReconnectDelay&#34;:&#34;10&#34;}\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><link rel=\"stylesheet\" href=\"/static/css/game/game.css\"><link rel=\"stylesheet\" href=\"/static/css/components/defaultQuestion.css\"></head><body>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.TopNavBar().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"gameWrapper\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -49,7 +60,7 @@ func Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSp
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(roomID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/game/game.templ`, Line: 19, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/game/game.templ`, Line: 27, Col: 27}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -61,14 +72,14 @@ func Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSp
 			}
 			if isOwner {
 				if isSpectator {
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div hx-ext=\"ws\" ws-connect=\"")
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"gameClass\" hx-ext=\"ws\" ws-connect=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var3 string
 					templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/ws/game/handler/%s", roomID))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/game/game.templ`, Line: 22, Col: 77}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/game/game.templ`, Line: 30, Col: 96}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 					if templ_7745c5c3_Err != nil {
@@ -85,14 +96,14 @@ func Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSp
 							return templ_7745c5c3_Err
 						}
 					} else {
-						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div hx-ext=\"ws\" ws-connect=\"")
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"gameClass\" hx-ext=\"ws\" ws-connect=\"")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
 						var templ_7745c5c3_Var4 string
 						templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/ws/game/handler/%s", roomID))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/game/game.templ`, Line: 40, Col: 78}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/game/game.templ`, Line: 48, Col: 97}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 						if templ_7745c5c3_Err != nil {
@@ -118,7 +129,7 @@ func Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSp
 					var templ_7745c5c3_Var5 string
 					templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/ws/game/handler/%s", roomID))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/game/game.templ`, Line: 56, Col: 77}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/game/game.templ`, Line: 64, Col: 78}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 					if templ_7745c5c3_Err != nil {
@@ -131,7 +142,7 @@ func Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSp
 				}
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</body>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div></body>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
