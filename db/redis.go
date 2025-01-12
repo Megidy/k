@@ -8,7 +8,7 @@ import (
 
 func NewRedisDB() (*redis.Client, error) {
 	options := &redis.Options{
-		Addr:     "localhost:32771",
+		Addr:     "localhost:6379",
 		Password: "",
 		DB:       0,
 	}
