@@ -1,26 +1,30 @@
 package room
 
+import "github.com/Megidy/k/static/templates/components"
+
 templ LoadConnectionToRoom(message string) {
-	<div class="swapConnectionRoom">
-		<head>
-			<meta charset="UTF-8"/>
-			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-			<script src="https://unpkg.com/htmx.org@1.9.2"></script>
-			<title>Connect To Room</title>
-		</head>
-		<body>
+	<head>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<script src="https://unpkg.com/htmx.org@1.9.2"></script>
+			<link rel="stylesheet" href="/static/css/room/roomConnection.css" />
+		<title>Connect To Room</title>
+	</head>
+	<body>
+	@components.TopNavBar()
+		<div class="swapConnectionRoom">
 			<div class="ConnectToRoom">
 				<form hx-post="/room/connect/confirm" hx-swap="outerHTML" hx-target=".swapConnectionRoom">
 					<div class="form-group">
 						<label for="code">code of room: </label>
-						<input type="text" id="code" name="code" required/>
+						<input type="text" id="code" name="code" placeholder="for example : WTd159Rq "required/>
 					</div>
 					<button type="submit" class="btn">Confirm</button>
 				</form>
 			</div>
-			<div>
+			<div class="message">
 				{ message }
 			</div>
-		</body>
-	</div>
+		</div>
+	</body>
 }

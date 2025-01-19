@@ -8,6 +8,8 @@ package room
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
+import "github.com/Megidy/k/static/templates/components"
+
 func LoadConnectionToRoom(message string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -29,20 +31,28 @@ func LoadConnectionToRoom(message string) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"swapConnectionRoom\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><script src=\"https://unpkg.com/htmx.org@1.9.2\"></script><title>Connect To Room</title></head><body><div class=\"ConnectToRoom\"><form hx-post=\"/room/connect/confirm\" hx-swap=\"outerHTML\" hx-target=\".swapConnectionRoom\"><div class=\"form-group\"><label for=\"code\">code of room: </label> <input type=\"text\" id=\"code\" name=\"code\" required></div><button type=\"submit\" class=\"btn\">Confirm</button></form></div><div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><script src=\"https://unpkg.com/htmx.org@1.9.2\"></script><link rel=\"stylesheet\" href=\"/static/css/room/roomConnection.css\"><title>Connect To Room</title></head><body>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.TopNavBar().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"swapConnectionRoom\"><div class=\"ConnectToRoom\"><form hx-post=\"/room/connect/confirm\" hx-swap=\"outerHTML\" hx-target=\".swapConnectionRoom\"><div class=\"form-group\"><label for=\"code\">code of room: </label> <input type=\"text\" id=\"code\" name=\"code\" placeholder=\"for example : WTd159Rq \" required></div><button type=\"submit\" class=\"btn\">Confirm</button></form></div><div class=\"message\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(message)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/room/room_connection.templ`, Line: 22, Col: 13}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/room/room_connection.templ`, Line: 26, Col: 13}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div></body></div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div></div></body>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
