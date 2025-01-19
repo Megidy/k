@@ -7,7 +7,7 @@ import (
 	"log"
 	"sync"
 
-	"github.com/Megidy/k/static/components"
+	"github.com/Megidy/k/static/templates/components"
 	"github.com/Megidy/k/types"
 	"github.com/gorilla/websocket"
 )
@@ -109,6 +109,7 @@ func (c *Client) WritePump() {
 		close(c.leaderBoardCh)
 		close(c.beforeGameWriterCh)
 		close(c.timeWriterCh)
+		close(c.innerLeaderBoardCh)
 	}()
 	for {
 		select {
