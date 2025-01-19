@@ -6,7 +6,26 @@ body {
     height: 100vh;
     margin: 0;
     flex-direction: column;
-}
+  background: #7c49f1;
+    animation: backgroundColorShift 30s ease infinite; 
+ }
+@keyframes backgroundColorShift {
+    0% {
+        background: #7c49f1; 
+    }
+    25% {
+        background: #71b7e6; 
+    }
+    50% {
+        background: #9b59b6;
+    }
+    75% {
+        background: #f3a683;
+    }
+    100% {
+        background: #7c49f1; 
+    }
+} 
 
 .gameWrapper{
     margin-top: 60px;
@@ -19,3 +38,72 @@ body {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     width: 300px;
 }
+body {
+            margin: 0;
+            font-family: 'Lato', Arial, sans-serif;
+            background: linear-gradient(135deg, #71b7e6, #9b59b6);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #333;
+        }
+
+        .game-container {
+            display: block;
+            width: 400px;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-header {
+            text-align: center;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #9b59b6;
+        }
+
+        #leaderboard {
+            margin-bottom: 20px;
+        }
+
+        #time {
+            font-size: 1.2em;
+            font-weight: bold;
+            text-align: center;
+            color: #333;
+        }
+
+        #game {
+            text-align: center;
+        }
+
+        #game p {
+            font-size: 1em;
+            margin-bottom: 20px;
+            color: #666;
+        }
+
+        #game button {
+            background-color: #9b59b6;
+            color: #ffffff;
+            font-size: 1em;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #game button:hover {
+            background-color: #7c51a1;
+        }
+
+        #beforeGameWait {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #999;
+        }
