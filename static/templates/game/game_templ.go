@@ -35,7 +35,7 @@ func Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSp
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<head><title>Game</title><script src=\"https://unpkg.com/htmx.org@1.9.8\"></script><script src=\"https://unpkg.com/htmx.org/dist/ext/multi-swap.js\"></script><script src=\"https://unpkg.com/htmx.org/dist/ext/ws.js\"></script><meta name=\"htmx-config\" content=\"{&#34;wsReconnectDelay&#34;:&#34;10&#34;}\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><link rel=\"stylesheet\" href=\"/static/css/game/game.css\"><link rel=\"stylesheet\" href=\"/static/css/components/defaultQuestion.css\"></head><body>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<head><title>Game</title><script src=\"https://unpkg.com/htmx.org@1.9.8\"></script><script src=\"https://unpkg.com/htmx.org/dist/ext/multi-swap.js\"></script><script src=\"https://unpkg.com/htmx.org/dist/ext/ws.js\"></script><meta name=\"htmx-config\" content=\"{&#34;wsReconnectDelay&#34;:&#34;10&#34;}\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><link rel=\"stylesheet\" href=\"/static/css/game/game.css\"><link rel=\"stylesheet\" href=\"/static/css/components/defaultQuestion.css\"><link rel=\"stylesheet\" href=\"/static/css/game/timeLoader.css\"></head><body>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -53,39 +53,35 @@ func Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSp
 				return templ_7745c5c3_Err
 			}
 		} else {
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div>Game ID : ")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var2 string
-			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(roomID)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/game/game.templ`, Line: 27, Col: 27}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
 			if isOwner {
 				if isSpectator {
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"gameClass\" hx-ext=\"ws\" ws-connect=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var3 string
-					templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/ws/game/handler/%s", roomID))
+					var templ_7745c5c3_Var2 string
+					templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/ws/game/handler/%s", roomID))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/game/game.templ`, Line: 30, Col: 96}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/game/game.templ`, Line: 29, Col: 96}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" ws-reconnect-delay=\"10000\"><div><h4>Game ID : ")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var3 string
+					templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(roomID)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/game/game.templ`, Line: 30, Col: 34}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" ws-reconnect-delay=\"10000\"><div id=\"leaderboard\"><div id=\"time\"><div id=\"spectator\"><p>You are spectating , so you can't play , just watch the current results </p><button type=\"submit\" ws-send>force start</button><div id=\"beforeGameWait\"></div></div></div><div id=\"innerLeaderboard\"></div><div id=\"currQuestion\"></div><div id=\"currNotReadyPlayers\"></div></div></div>")
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h4></div><div id=\"leaderboard\"><div id=\"time\"><div id=\"spectator\"><p>You are spectating , so you can't play , just watch the current results </p><button type=\"submit\" ws-send>force start</button><div id=\"beforeGameWait\"></div></div></div><div id=\"innerLeaderboard\"></div><div id=\"currQuestion\"></div><div id=\"currNotReadyPlayers\"></div></div></div>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -109,7 +105,20 @@ func Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSp
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" ws-reconnect-delay=\"10000\"><div id=\"leaderboard\"><div id=\"time\"></div><div id=\"game\"><p>Waiting for other players to connect </p><button type=\"submit\" ws-send>force start</button><div id=\"beforeGameWait\"></div></div></div></div>")
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" ws-reconnect-delay=\"10000\"><div><h4>Game ID : ")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						var templ_7745c5c3_Var5 string
+						templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(roomID)
+						if templ_7745c5c3_Err != nil {
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/game/game.templ`, Line: 49, Col: 35}
+						}
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h4></div><div id=\"leaderboard\"><div id=\"time\"></div><div id=\"game\"><p>Waiting for other players to connect </p><button type=\"submit\" ws-send>force start</button><div id=\"beforeGameWait\"></div></div></div></div>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
@@ -122,20 +131,33 @@ func Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSp
 						return templ_7745c5c3_Err
 					}
 				} else {
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div hx-ext=\"ws\" ws-connect=\"")
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"gameClass\" hx-ext=\"ws\" ws-connect=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var5 string
-					templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/ws/game/handler/%s", roomID))
+					var templ_7745c5c3_Var6 string
+					templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/ws/game/handler/%s", roomID))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/game/game.templ`, Line: 64, Col: 78}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/game/game.templ`, Line: 65, Col: 96}
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" ws-reconnect-delay=\"10000\"><div id=\"leaderboard\"><div id=\"time\"></div><div id=\"game\"><p>Waiting for other players to connect </p><div id=\"beforeGameWait\"></div></div></div></div>")
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" ws-reconnect-delay=\"10000\"><div><h4>Game ID : ")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var7 string
+					templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(roomID)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/game/game.templ`, Line: 66, Col: 34}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h4></div><div id=\"leaderboard\"><div id=\"time\"></div><div id=\"game\"><p>Waiting for other players to connect </p><div id=\"beforeGameWait\"></div></div></div></div>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
