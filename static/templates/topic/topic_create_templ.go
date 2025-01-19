@@ -8,7 +8,9 @@ package topic
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-func LoadCreateTopic() templ.Component {
+import "github.com/Megidy/k/static/templates/components"
+
+func LoadCreateTopic(message string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -29,7 +31,28 @@ func LoadCreateTopic() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><script src=\"https://unpkg.com/htmx.org@1.9.2\"></script><title>Create Topic</title></head><body><div class=\"topic\"><form hx-post=\"/topic/create/confirm\"><div class=\"form-group\"><label for=\"name\">name of the topic :</label> <input type=\"text\" id=\"name\" name=\"name\" required></div><div class=\"form-group\"><label for=\"number\">number of questions</label> <input type=\"number\" id=\"number\" name=\"number\" min=\"5\" max=\"20\" required></div><button type=\"submit\" class=\"btn\">Confirm</button></form></div></body>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><script src=\"https://unpkg.com/htmx.org@1.9.2\"></script><link rel=\"stylesheet\" href=\"/static/css/topic/createTopic.css\"><title>Create Topic</title></head><body>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.TopNavBar().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"topicSwapp\"><div class=\"topic\"><form hx-post=\"/topic/create/confirm\" hx-swap=\"outerHTML\" hx-target=\".topicSwapp\"><div class=\"form-group\"><label for=\"name\">name of the topic : </label> <input type=\"text\" id=\"name\" name=\"name\" placeholder=\"name\" required></div><div class=\"form-group\"><label for=\"number\">number of questions</label> <input type=\"number\" id=\"number\" name=\"number\" placeholder=\"5-20\" min=\"5\" max=\"20\" required></div><button type=\"submit\" class=\"btn\">Confirm</button></form><div class=\"message\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var2 string
+		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(message)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/topic/topic_create.templ`, Line: 29, Col: 14}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div></div></div></body>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
