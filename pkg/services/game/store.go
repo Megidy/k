@@ -16,6 +16,10 @@ type store struct {
 	redisDB *redis.Client
 }
 
+// TO DO
+// remake question storage to mongoDB
+// this should be perfect ngl
+
 func NewGameStore(sqlDB *sql.DB, redisDB *redis.Client) *store {
 	return &store{sqlDB: sqlDB, redisDB: redisDB}
 }
@@ -43,29 +47,31 @@ func (s *store) CreateTopic(questions []types.Question, userID string) error {
 			}
 		}
 	}
-
+	topics, hasCache, err := s.GetCachedUsersTopics(userID)
+	if err != nil {
+		return err
+	}
+	if hasCache {
+		topics = append(topics, *topic)
+	}
+	err = s.CacheTopics(userID, topics)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (s *store) GetUsersTopics(userID string) ([]types.Topic, error) {
 	var topics []types.Topic
-	ctx := context.Background()
-	cacheKey := "user:" + userID + ":topics_name:"
-	data, err := s.redisDB.Get(ctx, cacheKey).Result()
+	topics, hasCache, err := s.GetCachedUsersTopics(userID)
 	if err != nil {
-		if err == redis.Nil {
-			log.Println("no cache was found , querying from sql db")
-		} else {
-			return nil, err
-		}
-	} else {
-		err := json.Unmarshal([]byte(data), &topics)
-		if err != nil {
-			return nil, err
-		}
-		log.Println("cache found")
+		return nil, err
+	}
+	if hasCache {
+		log.Println("found cached topics : ", topics)
 		return topics, nil
 	}
+
 	rows, err := s.sqlDB.Query("select * from topics where user_id=?", userID)
 	if err != nil {
 		return nil, err
@@ -78,36 +84,20 @@ func (s *store) GetUsersTopics(userID string) ([]types.Topic, error) {
 		}
 		topics = append(topics, t)
 	}
-	if len(topics) > 0 {
-		data, err := json.Marshal(topics)
-		if err != nil {
-			return nil, err
-		}
-		err = s.redisDB.Set(ctx, cacheKey, data, time.Minute*10).Err()
-		if err != nil {
-			return nil, err
-		}
+	err = s.CacheTopics(userID, topics)
+	if err != nil {
+		return nil, err
 	}
 	return topics, nil
 }
 
 func (s *store) GetQuestionsByTopicName(TopicName string, userID string) ([]types.Question, error) {
 	var questions []types.Question
-	ctx := context.Background()
-	cacheKey := "user:" + userID + ":questions_of_topic:" + TopicName
-	data, err := s.redisDB.Get(ctx, cacheKey).Result()
+	questions, hasCache, err := s.GetCachedUsersQuestions(userID, TopicName)
 	if err != nil {
-		if err == redis.Nil {
-			log.Println("no cache was found , querying from sql db")
-		} else {
-			return nil, err
-		}
-	} else {
-		err := json.Unmarshal([]byte(data), &questions)
-		if err != nil {
-			return nil, err
-		}
-		log.Println("cache found")
+		return nil, err
+	}
+	if hasCache {
 		return questions, nil
 	}
 	row, err := s.sqlDB.Query("select * from topics where name=? and user_id=?", TopicName, userID)
@@ -153,15 +143,94 @@ func (s *store) GetQuestionsByTopicName(TopicName string, userID string) ([]type
 		}
 		questions = append(questions, q)
 	}
-	if len(questions) > 0 {
-		data, err := json.Marshal(questions)
-		if err != nil {
-			return nil, err
-		}
-		err = s.redisDB.Set(ctx, cacheKey, data, time.Minute*40).Err()
-		if err != nil {
-			return nil, err
-		}
+	err = s.CacheQuestions(userID, questions)
+	if err != nil {
+		return nil, err
 	}
 	return questions, nil
+}
+
+func (s *store) TopicNameAlreadyExists(userID string, topicName string) (bool, error) {
+	rows, err := s.sqlDB.Query("select 1 from topics where user_id=? and name=?", userID, topicName)
+	if err != nil {
+		return false, err
+	}
+	for !rows.Next() {
+		return false, nil
+	}
+	return true, nil
+}
+
+func (s *store) GetCachedUsersTopics(userID string) ([]types.Topic, bool, error) {
+	var topics []types.Topic
+	ctx := context.Background()
+	topicCacheKey := "user:" + userID + ":topics_name:"
+	data, err := s.redisDB.Get(ctx, topicCacheKey).Result()
+	if err != nil {
+		if err == redis.Nil {
+			log.Println("no cache was found , querying from sql db")
+		} else {
+			return nil, false, err
+		}
+	} else {
+		err := json.Unmarshal([]byte(data), &topics)
+		if err != nil {
+			return nil, false, err
+		}
+		log.Println("cached topics found : ", topics)
+		return topics, true, nil
+	}
+	return nil, false, nil
+}
+
+func (s *store) GetCachedUsersQuestions(userID string, topicName string) ([]types.Question, bool, error) {
+	ctx := context.Background()
+	var questions []types.Question
+	questionCacheKey := "user:" + userID + ":questions_of_topic:" + topicName
+	data, err := s.redisDB.Get(ctx, questionCacheKey).Result()
+	if err != nil {
+		if err == redis.Nil {
+			log.Println("no cache was found , querying from sql db")
+		} else {
+			return nil, false, err
+		}
+	} else {
+		err := json.Unmarshal([]byte(data), &questions)
+		if err != nil {
+			return nil, false, err
+		}
+		log.Println("cached questions found : ", questions)
+		return questions, true, nil
+	}
+	return nil, false, nil
+
+}
+
+func (s *store) CacheQuestions(userID string, questions []types.Question) error {
+	ctx := context.Background()
+	questionCacheKey := "user:" + userID + ":questions_of_topic:" + questions[0].Topic.Name
+	log.Println("caching questions : ", questions)
+	data, err := json.Marshal(questions)
+	if err != nil {
+		return err
+	}
+	err = s.redisDB.Set(ctx, questionCacheKey, data, time.Minute*5).Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (s *store) CacheTopics(userID string, topics []types.Topic) error {
+	ctx := context.Background()
+	topicCacheKey := "user:" + userID + ":topics_name:"
+	log.Println("caching topics : ", topics)
+	data, err := json.Marshal(topics)
+	if err != nil {
+		return err
+	}
+	err = s.redisDB.Set(ctx, topicCacheKey, data, time.Minute*5).Err()
+	if err != nil {
+		return err
+	}
+	return nil
 }
