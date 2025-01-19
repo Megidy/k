@@ -8,9 +8,11 @@ package room
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/Megidy/k/types"
-import "github.com/Megidy/k/static/templates/components"
-import "fmt"
+import (
+	"fmt"
+	"github.com/Megidy/k/static/templates/components"
+	"github.com/Megidy/k/types"
+)
 
 func LoadInfoPage(userTopics []types.Topic, defaultTopics []types.Topic, roomID, players, questions, playstyle string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -33,20 +35,28 @@ func LoadInfoPage(userTopics []types.Topic, defaultTopics []types.Topic, roomID,
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><script src=\"https://unpkg.com/htmx.org@1.9.2\"></script><title>Edit Room</title></head><body><div class=\"roomInfo\"><form id=\"topicForm\" hx-post=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><script src=\"https://unpkg.com/htmx.org@1.9.2\"></script><link rel=\"stylesheet\" href=\"/static/css/topic/topic.css\"><title>Edit Room</title></head><body>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.TopNavBar().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"topic-selection-container\"><form id=\"topicForm\" hx-post=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/game/%s/info/%s/%s/%s/confirm", roomID, players, questions, playstyle))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/room/room_info.templ`, Line: 16, Col: 113}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/room/room_info.templ`, Line: 20, Col: 118}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"><p>YourTopics: ")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"><p>YourTopics: </p><div class=\"topic-section\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -56,7 +66,7 @@ func LoadInfoPage(userTopics []types.Topic, defaultTopics []types.Topic, roomID,
 				return templ_7745c5c3_Err
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p><p>DefaultTopics: ")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div><p>DefaultTopics:</p><div class=\"topic-section\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -66,7 +76,7 @@ func LoadInfoPage(userTopics []types.Topic, defaultTopics []types.Topic, roomID,
 				return templ_7745c5c3_Err
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p><button type=\"submit\" class=\"btn\">Confirm</button></form></div></body>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div><button type=\"submit\" class=\"confirm-btn\">Confirm</button></form></div></body>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
