@@ -1,0 +1,31 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #71b7e6, #9b59b6);
+    background-attachment: fixed;
+    /* Закріплення градієнта */
+    padding-top: 60px;
+    min-height: 100vh;
+    /* Мінімальна висота тіла сторінки */
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(135deg, #71b7e6, #9b59b6);
+
+}
+
+.time-container {
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    padding: 15px;
+    border-radius: 8px;
+    width: fit-content;
+    margin: 10px auto;
+    text-align: center;
+}
+
+.time-text {
+    font-size: 18px;
+    color: #555;
+    margin: 0;
+    font-weight: bold;
+}
