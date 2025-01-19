@@ -1,4 +1,5 @@
 package components
+
 import (
 	"fmt"
 	"github.com/Megidy/k/types"
@@ -6,24 +7,23 @@ import (
 
 templ Question(question types.Question) {
 	<head>
-		<link rel="stylesheet" href="/static/css/components/defaultQuestion.css">
+		<link rel="stylesheet" href="/static/css/components/defaultQuestion.css"/>
 	</head>
 	<div class="quiz-container" hx-swap-oob="innerHTML:#game">
-    <p class="quiz-question">{ question.Question }</p>
-    if question.Type == "image" {
-        <img class="quiz-image" src={ question.ImageLink } alt="Question Image" />
-    }
-    <form class="quiz-form" id="sendingQuestionForm" ws-send>
-        for index, answer := range question.Answers {
-            <div class="quiz-option">
-                <input type="radio" id={ fmt.Sprintf("answer-%d", index) } name="answer" value={ answer } required />
-                <label for={ fmt.Sprintf("answer-%d", index) }>{ answer }</label>
-            </div>
-        }
-        <button class="quiz-submit" type="submit">Submit</button>
-    </form>
-</div>
-
+		<p class="quiz-question"><h4>{ question.Question }</h4></p>
+		if question.Type == "image" {
+			<img class="quiz-image" src={ question.ImageLink } alt="no image found :("/>
+		}
+		<form class="quiz-form" id="sendingQuestionForm" ws-send>
+			for index, answer := range question.Answers {
+				<div class="quiz-option">
+					<input type="radio" id={ fmt.Sprintf("answer-%d", index) } name="answer" value={ answer } required/>
+					<label for={ fmt.Sprintf("answer-%d", index) }>{ answer }</label>
+				</div>
+			}
+			<button class="quiz-submit" type="submit">Submit</button>
+		</form>
+	</div>
 }
 
 templ SpectatorQuestion(question types.Question) {
@@ -42,41 +42,31 @@ templ SpectatorQuestion(question types.Question) {
 	</div>
 }
 
-
 templ CreateQuestion(number int) {
 	<div id={ fmt.Sprintf("question-%d", number) }>
 		<div>
-			question number { fmt.Sprintf("%d",number+1) }
-			<br/>
-			<label for={ fmt.Sprintf("%d", number) }>Question:</label>
-			<br/>
-			<input type="text" id={ fmt.Sprintf("name-%d", number) } name={ fmt.Sprintf("name-%d", number) } required/>
+			<label for={ fmt.Sprintf("%d", number) }>Question  { fmt.Sprintf("%d",number+1) }:</label>
+			<input type="text" id={ fmt.Sprintf("name-%d", number) } name={ fmt.Sprintf("name-%d", number) } maxlength="200" placeholder="Your question here" required/>
 			<br/>
 		</div>
 		<div>
 			<label>Answers:</label>
 			<br/>
-			1 answer <input type="text" id={ fmt.Sprintf("a-1-%d", number) } name={ fmt.Sprintf("a-1-%d", number) } required/>
-			<br/>
-			2 answer :<input type="text" id={ fmt.Sprintf("a-2-%d", number) } name={ fmt.Sprintf("a-2-%d", number) } required/>
-			<br/>
-			3 answer :<input type="text" id={ fmt.Sprintf("a-3-%d", number) } name={ fmt.Sprintf("a-3-%d", number) } required/>
-			<br/>
-			4 answer :<input type="text" id={ fmt.Sprintf("a-4-%d", number) } name={ fmt.Sprintf("a-4-%d", number) } required/>
+			1 answer <input type="text" id={ fmt.Sprintf("a-1-%d", number) } name={ fmt.Sprintf("a-1-%d", number) } maxlength="200" placeholder="answer 1" required/>
+			2 answer :<input type="text" id={ fmt.Sprintf("a-2-%d", number) } name={ fmt.Sprintf("a-2-%d", number) } maxlength="200" placeholder="answer 2" required/>
+			3 answer :<input type="text" id={ fmt.Sprintf("a-3-%d", number) } name={ fmt.Sprintf("a-3-%d", number) } maxlength="200" placeholder="answer 3" required/>
+			4 answer :<input type="text" id={ fmt.Sprintf("a-4-%d", number) } name={ fmt.Sprintf("a-4-%d", number) } placeholder="answer 4" maxlength="200" required/>
 			<br/>
 		</div>
 		<div>
 			<label>Correct Answer is :</label>
-			<br/>
-			<input type="number" id={ fmt.Sprintf("correctA-%d", number) } name={ fmt.Sprintf("correctA-%d", number) } min="1" max="4"/>
+			<input type="number" id={ fmt.Sprintf("correctA-%d", number) } name={ fmt.Sprintf("correctA-%d", number) } min="1" max="4" placeholder="" required/>
 			<br/>
 		</div>
 		<br/>
 		<div>
 			<label>Image (not necessary , only link)</label>
-			<br/>
 			<input type="text" id={ fmt.Sprintf("image-%d", number) } name={ fmt.Sprintf("image-%d", number) }/>
-			<br/>
 			<br/>
 		</div>
 	</div>
