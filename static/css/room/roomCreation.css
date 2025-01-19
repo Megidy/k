@@ -1,4 +1,108 @@
+@import url('https://fonts.googleapis.com/css?family=Lato');
 
-.roomCreationWrapper{
-    margin-top: 60px;
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #9b59b6, #71b7e6,#e094fc , #3698da);
+    background-size: 400% 400%; 
+    animation: gradientShift 10s ease infinite; 
+
+}
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%; 
+    }
+    50% {
+        background-position: 100% 50%; 
+    }
+    100% {
+        background-position: 0% 50%; 
+    }
+}
+
+.roomCreationWrapper {
+  width: 300px;  /* Reduced width */
+  padding: 20px;
+  background: #E8FAF9;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.roomCreationWrapper .room {
+  display: flex;
+  flex-direction: column;
+}
+
+.roomCreationWrapper .form-group {
+  margin-bottom: 15px;
+}
+
+.roomCreationWrapper label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.roomCreationWrapper input[type="number"],
+.roomCreationWrapper input[type="radio"] + label {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #BBADDB;
+  border-radius: 5px;
+  background: #f9f9f9;
+  transition: border-color 0.3s, background 0.3s;
+}
+
+.roomCreationWrapper input[type="number"]:focus {
+  border-color: #9b59b6;
+  outline: none;
+}
+
+.roomCreationWrapper input[type="radio"] {
+  display: none;
+}
+
+.roomCreationWrapper input[type="radio"] + label {
+  display: inline-block; /* Adjust to prevent radio button from shifting right */
+  width: auto; /* Ensure label size fits radio button */
+  padding: 10px;
+  cursor: pointer;
+}
+
+.roomCreationWrapper input[type="radio"]:checked + label {
+  background: #71b7e6;
+  border-color: #5a8cb9;
+  color: #fff;
+}
+
+.roomCreationWrapper button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background-color: #9564BC;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.roomCreationWrapper button:hover {
+  background-color: #7c51a1;
+}
+
+.roomCreationWrapper button:focus {
+  outline: none;
+}
+
+.roomCreationWrapper button:active {
+  background-color: #5c3c7d;
 }
