@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Megidy/k/pkg/auth"
-	"github.com/Megidy/k/static/user"
+	"github.com/Megidy/k/static/templates/user"
 	"github.com/Megidy/k/types"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -91,7 +91,7 @@ func (h *userHandler) ConfirmLoginAccount(c *gin.Context) {
 		return
 	}
 	if !exists {
-		user.Login("data is invalid").Render(c.Request.Context(), c.Writer)
+		user.Login("data is invalid, please try again").Render(c.Request.Context(), c.Writer)
 		log.Println("user with this written data doesn't exsit")
 		return
 	}
@@ -103,7 +103,7 @@ func (h *userHandler) ConfirmLoginAccount(c *gin.Context) {
 	}
 	err = auth.CheckPasswordCorrectness(usr.Password, nativePassword)
 	if err != nil {
-		user.Login("data is invalid").Render(c.Request.Context(), c.Writer)
+		user.Login("data is invalid, please try again").Render(c.Request.Context(), c.Writer)
 		log.Println("error when comparing native and hashed passwords : ", err)
 		return
 	}
