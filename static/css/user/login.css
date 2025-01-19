@@ -6,104 +6,91 @@ body {
     height: 100vh;
     margin: 0;
     flex-direction: column;
-    background-color: #f4f4f9;
-}
+    background: linear-gradient(135deg, #9b59b6, #71b7e6,#e094fc , #3698da);
+    background-size: 400% 400%; 
+    animation: gradientShift 10s ease infinite; 
 
+}
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%; 
+    }
+    50% {
+        background-position: 100% 50%; 
+    }
+    100% {
+        background-position: 0% 50%; 
+    }
+}
 .loginClassSwap {
-    margin-top: 80px;
+    margin-top: 60px;
 }
 
 .login {
     background-color: #E8FAF9;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    width: 90%; /* Adjust width to be responsive */
-    max-width: 400px; /* Set a maximum width */
-    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 300px;
 }
 
 .login label {
     display: block;
-    margin-bottom: 10px; 
+    margin-bottom: 8px;
     font-weight: bold;
-    font-size: 1.2em;
 }
 
 .login input[type="email"],
 .login input[type="password"] {
     width: 100%;
-    padding: 12px;
-    margin-bottom: 20px;
+    padding: 8px;
+    margin-bottom: 16px;
     background-color: #E8FAF9;
     border: 1px solid #BBADDB;
-    border-radius: 8px;
-    font-size: 1.1em;
+    border-radius: 6px;
 }
 
 .login button.btn {
     width: 100%;
-    padding: 14px;
+    padding: 10px;
     background-color: #9564BC;
     color: #fff;
     border: none;
-    border-radius: 6px;
-    font-size: 1.2em;
+    border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
 }
 
 .login button.btn:hover {
-    background-color: #7c51a1;
+    background-color: #0056b3;
 }
 
 .login a.link {
     display: block;
     text-align: center;
-    margin-top: 20px;
+    margin-top: 16px;
     color: #007bff;
     text-decoration: none;
-    font-size: 1.1em;
 }
+
 
 .login a.link:hover {
     text-decoration: underline;
 }
 
 .message {
-    margin-top: 20px;
+   
+    margin-top: 16px;
     color: red;
     text-align: center;
-    font-size: 1.1em;
+    opacity: 0;
+    animation: fadeout 3s ease-in-out forwards;
 }
 
-/* Media query for smaller screens */
-@media screen and (max-width: 600px) {
-    .login {
-        padding: 20px; /* Adjust padding for smaller screens */
+@keyframes fadeout {
+    from {
+        opacity: 1; /* Початок з нульової прозорості */
     }
-
-    .login label {
-        font-size: 1em; /* Adjust font size for smaller screens */
-    }
-
-    .login input[type="email"],
-    .login input[type="password"] {
-        padding: 10px; /* Adjust padding for smaller screens */
-        font-size: 1em; /* Adjust font size for smaller screens */
-    }
-
-    .login button.btn {
-        padding: 12px; /* Adjust padding for smaller screens */
-        font-size: 1em; /* Adjust font size for smaller screens */
-    }
-
-    .login a.link {
-        font-size: 1em; /* Adjust font size for smaller screens */
-    }
-
-    .message {
-        font-size: 1em; /* Adjust font size for smaller screens */
+    to {
+        opacity: 0; /* Кінцево повністю видимий */
     }
 }
-
