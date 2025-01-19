@@ -38,7 +38,12 @@ type ClientSideHandler interface {
 type GameStore interface {
 	CreateTopic(questions []Question, userID string) error
 	GetUsersTopics(userID string) ([]Topic, error)
-	GetQuestionsByTopicName(TopicName string) ([]Question, error)
+	TopicNameAlreadyExists(userID string, topicName string) (bool, error)
+	GetQuestionsByTopicName(TopicName string, userID string) ([]Question, error)
+	GetCachedUsersTopics(userID string) ([]Topic, bool, error)
+	GetCachedUsersQuestions(userID string, topicName string) ([]Question, bool, error)
+	CacheQuestions(userID string, questions []Question) error
+	CacheTopics(userID string, topics []Topic) error
 }
 type UserStore interface {
 	GetUserById(id string) (*User, error)
