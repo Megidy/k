@@ -3,10 +3,12 @@ package types
 import "github.com/gin-gonic/gin"
 
 type User struct {
-	ID       string
-	UserName string
-	Email    string
-	Password string
+	ID             string
+	UserName       string
+	Email          string
+	Password       string
+	Description    string
+	ProfilePicture string
 }
 type Player struct {
 	Username string
@@ -50,4 +52,5 @@ type UserStore interface {
 	CreateUser(user *User) error
 	UserExists(user *User) (bool, error)
 	GetUserByEmail(email string) (*User, error)
+	UpdateDescription(userID, description string) error
 }
