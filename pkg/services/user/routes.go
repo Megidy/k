@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"log"
 	"net/http"
 
@@ -22,7 +23,7 @@ func NewUserHandler(userStore types.UserStore, clientSideHandler types.ClientSid
 		userStore:         userStore,
 	}
 }
-func (h *userHandler) RegisterRoutes(router gin.IRouter) {
+func (h *userHandler) RegisterRoutes(router gin.IRouter, authHandler *auth.Handler) {
 	//create account
 	router.GET("/account/create", h.LoadCreateAccountTempl)
 	router.POST("/account/create/confirm", h.ConfirmCreateAccount)
@@ -30,6 +31,11 @@ func (h *userHandler) RegisterRoutes(router gin.IRouter) {
 	//login
 	router.GET("/account/login", h.LoadLoginAccountTempl)
 	router.POST("/account/login/confirm", h.ConfirmLoginAccount)
+
+	router.GET("/account/info", authHandler.WithJWT, h.LoadUserAccount)
+	router.GET("/account/info/:userID", authHandler.WithJWT, h.LoadUserAccount)
+
+	router.POST("/account/info/description/confirm", authHandler.WithJWT, h.ConfirmDescriptionCreation)
 }
 func (h *userHandler) LoadCreateAccountTempl(c *gin.Context) {
 	user.Signup("").Render(c.Request.Context(), c.Writer)
@@ -117,5 +123,42 @@ func (h *userHandler) ConfirmLoginAccount(c *gin.Context) {
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie("Authorization", token, 3600*24*10, "/", "", false, true)
 	c.Writer.Header().Add("HX-Redirect", "/room/connect")
+
+}
+
+func (h *userHandler) LoadUserAccount(c *gin.Context) {
+	userID := c.Param("userID")
+	if userID != "" {
+		usr, err := h.userStore.GetUserById(userID)
+		if err != nil {
+			log.Println("error : ", err)
+			return
+		}
+		if usr.UserName == "" {
+			u, _ := c.Get("user")
+			user.LoadUserAccount(u.(*types.User), true).Render(context.Background(), c.Writer)
+			return
+		}
+		log.Println("user : ", usr)
+		user.LoadUserAccount(usr, false).Render(context.Background(), c.Writer)
+		return
+	} else {
+		u, _ := c.Get("user")
+		user.LoadUserAccount(u.(*types.User), true).Render(context.Background(), c.Writer)
+		return
+	}
+
+}
+
+func (h *userHandler) ConfirmDescriptionCreation(c *gin.Context) {
+	u, _ := c.Get("user")
+	description := h.clientSideHandler.GetDataFromForm(c, "description")
+	log.Println("description : ", description)
+	err := h.userStore.UpdateDescription(u.(*types.User).ID, description)
+	if err != nil {
+		log.Println("error : ", err)
+		return
+	}
+	c.Writer.Header().Add("HX-Redirect", "/account/info")
 
 }
