@@ -2,12 +2,20 @@ package main
 
 import (
 	"log"
+	"runtime"
+	"time"
 
 	"github.com/Megidy/k/api"
 	"github.com/Megidy/k/db"
 )
 
 func main() {
+	go func() {
+		for {
+			log.Println("number of goruotines : ", runtime.NumGoroutine())
+			time.Sleep(time.Second * 2)
+		}
+	}()
 	sqlDB, err := db.NewSQlDB()
 	if err != nil {
 		log.Fatalln("error when establishing connection to sql db : ", err)
@@ -23,4 +31,5 @@ func main() {
 	if err != nil {
 		log.Fatalln("error while hosting server :", err)
 	}
+
 }
