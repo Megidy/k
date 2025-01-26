@@ -1,23 +1,32 @@
 package game
 
 import (
+	"context"
 	"database/sql"
+	"encoding/json"
 	"log"
+	"time"
 
 	"github.com/Megidy/k/types"
+	"github.com/redis/go-redis/v9"
 )
 
 type store struct {
-	db *sql.DB
+	sqlDB   *sql.DB
+	redisDB *redis.Client
 }
 
-func NewGameStore(db *sql.DB) *store {
-	return &store{db: db}
+// TO DO
+// remake question storage to mongoDB
+// this should be perfect ngl
+
+func NewGameStore(sqlDB *sql.DB, redisDB *redis.Client) *store {
+	return &store{sqlDB: sqlDB, redisDB: redisDB}
 }
 
 func (s *store) CreateTopic(questions []types.Question, userID string) error {
 	topic := questions[0].Topic
-	_, err := s.db.Exec("insert into topics values(?,?,?)", topic.TopicID, userID, topic.Name)
+	_, err := s.sqlDB.Exec("insert into topics values(?,?,?)", topic.TopicID, userID, topic.Name)
 	if err != nil {
 		log.Println("error occured in topics : ", err)
 		return err
@@ -25,26 +34,45 @@ func (s *store) CreateTopic(questions []types.Question, userID string) error {
 	}
 	for _, question := range questions {
 
-		_, err = s.db.Exec("insert into questions values(?,?,?,?,?,?)", question.Id, question.Topic.TopicID, question.Type, question.ImageLink, question.Question, question.CorrectAnswer)
+		_, err = s.sqlDB.Exec("insert into questions values(?,?,?,?,?,?)", question.Id, question.Topic.TopicID, question.Type, question.ImageLink, question.Question, question.CorrectAnswer)
 		if err != nil {
 			log.Println("error occured in questions : ", err)
 			return err
 		}
 		for _, answer := range question.Answers {
-			_, err = s.db.Exec("insert into answers values(?,?)", question.Id, answer)
+			_, err = s.sqlDB.Exec("insert into answers values(?,?)", question.Id, answer)
 			if err != nil {
 				log.Println("error occured in answers : ", err)
 				return err
 			}
 		}
 	}
-
+	topics, hasCache, err := s.GetCachedUsersTopics(userID)
+	if err != nil {
+		return err
+	}
+	if hasCache {
+		topics = append(topics, *topic)
+	}
+	err = s.CacheTopics(userID, topics)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (s *store) GetUsersTopics(userID string) ([]types.Topic, error) {
 	var topics []types.Topic
-	rows, err := s.db.Query("select * from topics where user_id=?", userID)
+	topics, hasCache, err := s.GetCachedUsersTopics(userID)
+	if err != nil {
+		return nil, err
+	}
+	if hasCache {
+		log.Println("found cached topics : ", topics)
+		return topics, nil
+	}
+
+	rows, err := s.sqlDB.Query("select * from topics where user_id=?", userID)
 	if err != nil {
 		return nil, err
 	}
@@ -56,13 +84,23 @@ func (s *store) GetUsersTopics(userID string) ([]types.Topic, error) {
 		}
 		topics = append(topics, t)
 	}
-
+	err = s.CacheTopics(userID, topics)
+	if err != nil {
+		return nil, err
+	}
 	return topics, nil
 }
 
-func (s *store) GetQuestionsByTopicName(TopicName string) ([]types.Question, error) {
+func (s *store) GetQuestionsByTopicName(TopicName string, userID string) ([]types.Question, error) {
 	var questions []types.Question
-	row, err := s.db.Query("select * from topics where name=?", TopicName)
+	questions, hasCache, err := s.GetCachedUsersQuestions(userID, TopicName)
+	if err != nil {
+		return nil, err
+	}
+	if hasCache {
+		return questions, nil
+	}
+	row, err := s.sqlDB.Query("select * from topics where name=? and user_id=?", TopicName, userID)
 	if err != nil {
 		log.Println("error with topics")
 		return nil, err
@@ -76,7 +114,7 @@ func (s *store) GetQuestionsByTopicName(TopicName string) ([]types.Question, err
 		}
 	}
 
-	rows, err := s.db.Query("select id,type,image_link,question,correct_answer from questions where topic_id=?", t.TopicID)
+	rows, err := s.sqlDB.Query("select id,type,image_link,question,correct_answer from questions where topic_id=?", t.TopicID)
 	if err != nil {
 		log.Println("error with questions")
 		return nil, err
@@ -89,7 +127,7 @@ func (s *store) GetQuestionsByTopicName(TopicName string) ([]types.Question, err
 		if err != nil {
 			return nil, err
 		}
-		rows, err := s.db.Query("select answer from answers where question_id=?", q.Id)
+		rows, err := s.sqlDB.Query("select answer from answers where question_id=?", q.Id)
 		if err != nil {
 			log.Println("error with answers ")
 			return nil, err
@@ -105,5 +143,94 @@ func (s *store) GetQuestionsByTopicName(TopicName string) ([]types.Question, err
 		}
 		questions = append(questions, q)
 	}
+	err = s.CacheQuestions(userID, questions)
+	if err != nil {
+		return nil, err
+	}
 	return questions, nil
+}
+
+func (s *store) TopicNameAlreadyExists(userID string, topicName string) (bool, error) {
+	rows, err := s.sqlDB.Query("select 1 from topics where user_id=? and name=?", userID, topicName)
+	if err != nil {
+		return false, err
+	}
+	for !rows.Next() {
+		return false, nil
+	}
+	return true, nil
+}
+
+func (s *store) GetCachedUsersTopics(userID string) ([]types.Topic, bool, error) {
+	var topics []types.Topic
+	ctx := context.Background()
+	topicCacheKey := "user:" + userID + ":topics_name:"
+	data, err := s.redisDB.Get(ctx, topicCacheKey).Result()
+	if err != nil {
+		if err == redis.Nil {
+			log.Println("no cache was found , querying from sql db")
+		} else {
+			return nil, false, err
+		}
+	} else {
+		err := json.Unmarshal([]byte(data), &topics)
+		if err != nil {
+			return nil, false, err
+		}
+		log.Println("cached topics found : ", topics)
+		return topics, true, nil
+	}
+	return nil, false, nil
+}
+
+func (s *store) GetCachedUsersQuestions(userID string, topicName string) ([]types.Question, bool, error) {
+	ctx := context.Background()
+	var questions []types.Question
+	questionCacheKey := "user:" + userID + ":questions_of_topic:" + topicName
+	data, err := s.redisDB.Get(ctx, questionCacheKey).Result()
+	if err != nil {
+		if err == redis.Nil {
+			log.Println("no cache was found , querying from sql db")
+		} else {
+			return nil, false, err
+		}
+	} else {
+		err := json.Unmarshal([]byte(data), &questions)
+		if err != nil {
+			return nil, false, err
+		}
+		log.Println("cached questions found : ", questions)
+		return questions, true, nil
+	}
+	return nil, false, nil
+
+}
+
+func (s *store) CacheQuestions(userID string, questions []types.Question) error {
+	ctx := context.Background()
+	questionCacheKey := "user:" + userID + ":questions_of_topic:" + questions[0].Topic.Name
+	log.Println("caching questions : ", questions)
+	data, err := json.Marshal(questions)
+	if err != nil {
+		return err
+	}
+	err = s.redisDB.Set(ctx, questionCacheKey, data, time.Minute*5).Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (s *store) CacheTopics(userID string, topics []types.Topic) error {
+	ctx := context.Background()
+	topicCacheKey := "user:" + userID + ":topics_name:"
+	log.Println("caching topics : ", topics)
+	data, err := json.Marshal(topics)
+	if err != nil {
+		return err
+	}
+	err = s.redisDB.Set(ctx, topicCacheKey, data, time.Minute*5).Err()
+	if err != nil {
+		return err
+	}
+	return nil
 }

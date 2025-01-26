@@ -1,0 +1,97 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    flex-direction: column;
+    background: linear-gradient(135deg, #9b59b6, #71b7e6,#e094fc , #3698da);
+    background-size: 400% 400%; 
+    animation: gradientShift 10s ease infinite; 
+
+}
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%; 
+    }
+    50% {
+        background-position: 100% 50%; 
+    }
+    100% {
+        background-position: 0% 50%; 
+    }
+}
+
+.question-container {
+    background-color: #E8FAF9;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 600px;
+    margin-bottom: 20px;
+}
+
+.question-header {
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #5F4B8B;
+}
+
+.question-body, .answers, .correct-answer, .image {
+    margin-bottom: 15px;
+}
+
+label {
+    font-weight: bold;
+    color: #333;
+}
+
+input[type="text"], input[type="number"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    background-color: #E8FAF9;
+    border: 1px solid #BBADDB;
+    border-radius: 6px;
+}
+
+input[type="text"]:focus, input[type="number"]:focus {
+    border-color: #9564BC;
+}
+
+input[type="number"] {
+    width: 60px;
+}
+
+button.btn {
+    width: 100%;
+    padding: 10px;
+    background-color: #9564BC;
+    color: #E8FAF9;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button.btn:hover {
+    background-color: #0056b3;
+}
+
+.message {
+    opacity: 0;
+    animation: fadeout 3s ease-in-out forwards;
+    margin-top: 16px;
+    color: red;
+    text-align: center;
+}
+
+@keyframes fadeout {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}

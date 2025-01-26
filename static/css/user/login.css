@@ -1,0 +1,96 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    flex-direction: column;
+    background: linear-gradient(135deg, #9b59b6, #71b7e6,#e094fc , #3698da);
+    background-size: 400% 400%; 
+    animation: gradientShift 10s ease infinite; 
+
+}
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%; 
+    }
+    50% {
+        background-position: 100% 50%; 
+    }
+    100% {
+        background-position: 0% 50%; 
+    }
+}
+.loginClassSwap {
+    margin-top: 60px;
+}
+
+.login {
+    background-color: #E8FAF9;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 300px;
+}
+
+.login label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.login input[type="email"],
+.login input[type="password"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 16px;
+    background-color: #E8FAF9;
+    border: 1px solid #BBADDB;
+    border-radius: 6px;
+}
+
+.login button.btn {
+    width: 100%;
+    padding: 10px;
+    background-color: #9564BC;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.login button.btn:hover {
+    background-color: #0056b3;
+}
+
+.login a.link {
+    display: block;
+    text-align: center;
+    margin-top: 16px;
+    color: #007bff;
+    text-decoration: none;
+}
+
+
+.login a.link:hover {
+    text-decoration: underline;
+}
+
+.message {
+   
+    margin-top: 16px;
+    color: red;
+    text-align: center;
+    opacity: 0;
+    animation: fadeout 3s ease-in-out forwards;
+}
+
+@keyframes fadeout {
+    from {
+        opacity: 1; /* Початок з нульової прозорості */
+    }
+    to {
+        opacity: 0; /* Кінцево повністю видимий */
+    }
+}

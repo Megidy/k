@@ -3,10 +3,12 @@ package types
 import "github.com/gin-gonic/gin"
 
 type User struct {
-	ID       string
-	UserName string
-	Email    string
-	Password string
+	ID             string
+	UserName       string
+	Email          string
+	Password       string
+	Description    string
+	ProfilePicture string
 }
 type Player struct {
 	Username string
@@ -38,11 +40,17 @@ type ClientSideHandler interface {
 type GameStore interface {
 	CreateTopic(questions []Question, userID string) error
 	GetUsersTopics(userID string) ([]Topic, error)
-	GetQuestionsByTopicName(TopicName string) ([]Question, error)
+	TopicNameAlreadyExists(userID string, topicName string) (bool, error)
+	GetQuestionsByTopicName(TopicName string, userID string) ([]Question, error)
+	GetCachedUsersTopics(userID string) ([]Topic, bool, error)
+	GetCachedUsersQuestions(userID string, topicName string) ([]Question, bool, error)
+	CacheQuestions(userID string, questions []Question) error
+	CacheTopics(userID string, topics []Topic) error
 }
 type UserStore interface {
 	GetUserById(id string) (*User, error)
 	CreateUser(user *User) error
 	UserExists(user *User) (bool, error)
 	GetUserByEmail(email string) (*User, error)
+	UpdateDescription(userID, description string) error
 }

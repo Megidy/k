@@ -1,0 +1,68 @@
+package components
+
+import (
+	"fmt"
+	"github.com/Megidy/k/types"
+)
+
+templ Waiting(usernames []string) {
+	<div hx-swap-oob="innerHTML:#game">
+		<p>You Have Done this Question :), now wait for this players: </p>
+		<ul>
+			for _,username:=range usernames {
+				<li>
+					{ username }
+				</li>
+			}
+		</ul>
+	</div>
+}
+
+templ SpectatorWaitList(usernames []string) {
+	<div hx-swap-oob="innerHTML:#currNotReadyPlayers">
+		<p>didn't comlete question yet : </p>
+		<ul>
+			for _,username:=range usernames {
+				<li>
+					{ username }
+				</li>
+			}
+		</ul>
+	</div>
+}
+
+templ BeforeGameWaitList(usernames []string) {
+	<div hx-swap-oob="innerHTML:#beforeGameWait">
+		<p>Connected Players : </p>
+		<ul>
+			for _,username:=range usernames {
+				<li>
+					{ username }
+				</li>
+			}
+		</ul>
+	</div>
+}
+
+templ TimeLoader(time int) {
+	<head>
+		<link rel="stylesheet" href="/static/css/game/timeLoader.css"/>
+	</head>
+	<div class="time-container" style="background-color: #f38e8e; border: 1px solid #ccc; padding: 10px; border-radius: 5px; max-width: 200px; text-align: center;" hx-swap-oob="innerHTML:#time" >
+		<h3>time left : { fmt.Sprintf("%d",time) }</h3>
+	</div>
+}
+
+templ LoadDuplicate() {
+	<div hx-swap-oob="innerHTML:#game">
+		<p>You are already in thins game</p>
+	</div>
+}
+
+templ Topics(topic types.Topic) {
+	<div class="topic-option">
+		<input type="radio" id={ fmt.Sprintf("%s", topic.Name) } name="topic" value={ fmt.Sprintf("%s", topic.Name) } required/>
+		<label class="topic-label" for={ fmt.Sprintf("%s", topic.Name) }>{ topic.Name } </label>
+		<br/>
+	</div>
+}

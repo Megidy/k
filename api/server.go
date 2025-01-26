@@ -8,27 +8,30 @@ import (
 	"github.com/Megidy/k/pkg/services/user"
 	"github.com/Megidy/k/static/client"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
 
 type Server struct {
-	addr string
-	db   *sql.DB
+	addr    string
+	sqlDB   *sql.DB
+	redisDB *redis.Client
 }
 
-func NewServer(addr string, db *sql.DB) *Server {
+func NewServer(addr string, sqlDB *sql.DB, redisDB *redis.Client) *Server {
 	return &Server{
-		addr: addr,
-		db:   db,
+		addr:    addr,
+		sqlDB:   sqlDB,
+		redisDB: redisDB,
 	}
 }
 
 func (s *Server) Run() error {
 
 	router := gin.Default()
-
+	router.Static("/static", "./static")
 	//initializing of stores
-	gameStore := game.NewGameStore(s.db)
-	userStore := user.NewStore(s.db)
+	gameStore := game.NewGameStore(s.sqlDB, s.redisDB)
+	userStore := user.NewStore(s.sqlDB)
 
 	//initializing of handlers
 
@@ -39,7 +42,7 @@ func (s *Server) Run() error {
 
 	//userHandler
 	userHandler := user.NewUserHandler(userStore, clientSideHandler)
-	userHandler.RegisterRoutes(router)
+	userHandler.RegisterRoutes(router, authHandler)
 
 	//gameHandler
 	gameHandler := game.NewGameHandler(clientSideHandler, gameStore)

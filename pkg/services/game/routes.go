@@ -6,17 +6,20 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
+	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/Megidy/k/pkg/auth"
-	"github.com/Megidy/k/static/game"
-	"github.com/Megidy/k/static/room"
-	"github.com/Megidy/k/static/topic"
+	"github.com/Megidy/k/static/templates/game"
+	"github.com/Megidy/k/static/templates/room"
+	"github.com/Megidy/k/static/templates/topic"
 	"github.com/Megidy/k/types"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
+
+//TO DO: Create oportunity to check question of existing topics
 
 type gameHandler struct {
 	clienSideHandler types.ClientSideHandler
@@ -60,16 +63,25 @@ func (h *gameHandler) LoadInfoTempl(c *gin.Context) {
 	u, _ := c.Get("user")
 	user := u.(*types.User)
 	log.Println("user :", user)
+
 	topics, err := h.gameStore.GetUsersTopics(user.ID)
 	if err != nil {
 		log.Println("error : ", err)
 		return
+
 	}
+
 	p := c.Param("players")
 	q := c.Param("questions")
 	playstyle := c.Param("playstyle")
 	log.Println("topic avaible : ", topics)
-	comp := room.LoadInfoPage(topics, topics, roomID, p, q, playstyle)
+	comp := room.LoadInfoPage(topics, []types.Topic{
+		{
+			TopicID: "3",
+			UserID:  user.ID,
+			Name:    "ANOTHERONE",
+		},
+	}, roomID, p, q, playstyle)
 	comp.Render(context.Background(), c.Writer)
 }
 func (h *gameHandler) ConfirmInfo(c *gin.Context) {
@@ -78,6 +90,13 @@ func (h *gameHandler) ConfirmInfo(c *gin.Context) {
 
 	topic := h.clienSideHandler.GetDataFromForm(c, "topic")
 	roomID := c.Param("roomID")
+	_, ok := globalRoomManager.GetManager(roomID)
+	if ok {
+		b := make([]byte, 6)
+		rand.Read(b)
+		roomID = base64.StdEncoding.EncodeToString(b)
+		roomID = strings.ReplaceAll(roomID, "/", "d")
+	}
 	p := c.Param("players")
 	q := c.Param("questions")
 	play := c.Param("playstyle")
@@ -98,7 +117,7 @@ func (h *gameHandler) ConfirmInfo(c *gin.Context) {
 	}
 	//find question with this topic
 	log.Println("topic : ", topic)
-	questions, err := h.gameStore.GetQuestionsByTopicName(topic)
+	questions, err := h.gameStore.GetQuestionsByTopicName(topic, u.(*types.User).ID)
 	if err != nil {
 		log.Println("error when getting question from db by topic : ", err)
 		return
@@ -107,7 +126,6 @@ func (h *gameHandler) ConfirmInfo(c *gin.Context) {
 	globalRoomManager.CreateRoom(u.(*types.User).UserName, roomID, players, playstyle, numberOfQuestions, questions)
 	url := fmt.Sprintf("/game/%s", roomID)
 	c.Writer.Header().Add("HX-Redirect", url)
-	//redirect to game handler : /game/:roomID
 }
 
 func (h *gameHandler) HandleGame(c *gin.Context) {
@@ -204,14 +222,27 @@ func (h *gameHandler) ConfirmCreationOfRoom(c *gin.Context) {
 }
 
 func (h *gameHandler) LoadTopicCreation(c *gin.Context) {
-	comp := topic.LoadCreateTopic()
+	comp := topic.LoadCreateTopic("")
 	comp.Render(context.Background(), c.Writer)
 }
 func (h *gameHandler) ConfirmTopicCreation(c *gin.Context) {
+	u, _ := c.Get("user")
+
 	id := uuid.NewString()
 	name := h.clienSideHandler.GetDataFromForm(c, "name")
 	number := h.clienSideHandler.GetDataFromForm(c, "number")
-
+	exists, err := h.gameStore.TopicNameAlreadyExists(u.(*types.User).ID, name)
+	if err != nil {
+		log.Println("error when checking existance of topic :", err)
+		comp := topic.LoadCreateTopic(err.Error())
+		comp.Render(context.Background(), c.Writer)
+		return
+	}
+	if exists {
+		comp := topic.LoadCreateTopic("topic with this name already exists!")
+		comp.Render(context.Background(), c.Writer)
+		return
+	}
 	url := fmt.Sprintf("/topic/%s/%s/%s/questions", id, name, number)
 	c.Writer.Header().Add("HX-Redirect", url)
 }
@@ -226,6 +257,16 @@ func (h *gameHandler) LoadCreationOfQuestions(c *gin.Context) {
 		log.Println("error when converting  : ", err)
 		return
 	}
+	u, _ := c.Get("user")
+	exists, err := h.gameStore.TopicNameAlreadyExists(u.(*types.User).ID, name)
+	if err != nil {
+		c.Redirect(http.StatusMovedPermanently, "/topic/create")
+		return
+	}
+	if exists {
+		c.Redirect(http.StatusMovedPermanently, "/topic/create")
+		return
+	}
 	comp := topic.LoadCreateQuestions(name, topicID, nums)
 	comp.Render(context.Background(), c.Writer)
 }
@@ -233,9 +274,12 @@ func (h *gameHandler) LoadCreationOfQuestions(c *gin.Context) {
 func (h *gameHandler) ConfirmCreationOfQuestion(c *gin.Context) {
 	var questions []types.Question
 
+	u, _ := c.Get("user")
+
 	var topic types.Topic
 
 	name := c.Param("name")
+
 	topicID := c.Param("topicID")
 	topic.Name = name
 	topic.TopicID = topicID
@@ -274,11 +318,11 @@ func (h *gameHandler) ConfirmCreationOfQuestion(c *gin.Context) {
 		log.Println("Question №", i+1, " : ", q)
 		questions = append(questions, q)
 	}
-	u, _ := c.Get("user")
 	err = h.gameStore.CreateTopic(questions, u.(*types.User).ID)
 	if err != nil {
 		log.Println("error when creating topic :", err)
 		return
 	}
 
+	c.Writer.Header().Add("HX-Redirect", "/room/create")
 }

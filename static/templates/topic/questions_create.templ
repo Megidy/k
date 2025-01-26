@@ -1,0 +1,30 @@
+package topic
+
+import (
+	"fmt"
+	"github.com/Megidy/k/static/templates/components"
+)
+
+templ LoadCreateQuestions(name,topicID string, numberOfQuestion int) {
+	<head>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<script src="https://unpkg.com/htmx.org@1.9.2"></script>
+		<title>Create Question for Topic</title>
+		<link rel="stylesheet" href="/static/css/components/CreateQuestion.css">
+		<link rel="stylesheet" href="/static/css/components/CreateQuestionComponent.css">
+	</head>
+	<body>
+	@components.TopNavBar()
+		<div class="questionsCreation">
+			<form id="creatingQuestionForm" hx-post={ fmt.Sprintf("/topic/%s/%s/%d/questions/confirm", topicID, name, numberOfQuestion) }>
+				<div>
+					for i:=0;i<numberOfQuestion;i++ {
+						@components.CreateQuestion(i)
+					}
+				</div>
+				<button type="submit" class="btn">Confirm</button>
+			</form>
+		</div>
+	</body>
+}

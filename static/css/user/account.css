@@ -1,0 +1,124 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    flex-direction: column;
+    background: linear-gradient(135deg, #9b59b6, #71b7e6, #e094fc, #3698da);
+    background-size: 400% 400%;
+    animation: gradientShift 10s ease infinite;
+
+}
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.profile {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    width: 400px;
+    text-align: center;
+}
+
+.profilePicture img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 3px solid #8e44ad;
+    margin-bottom: 15px;
+}
+
+.userName {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #8e44ad;
+}
+
+.descriptionLabel {
+    margin-top: 20px;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #555;
+}
+
+.descriptionForm textarea {
+    font-family: Arial, sans-serif;
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    margin-top: 10px;
+    resize: none;
+    font-size: 1rem;
+}
+
+.descriptionForm button {
+    margin-top: 15px;
+    background-color: #8e44ad;
+    color: #fff;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.descriptionForm button:hover {
+    background-color: #732d91;
+}
+
+.userDescription {
+    margin-top: 10px;
+    font-size: 1rem;
+    color: #444;
+}
+
+@media (max-width: 768px) {
+    .profile {
+        width: 90%;
+        padding: 15px;
+    }
+
+    .profilePicture img {
+        width: 80px;
+        height: 80px;
+    }
+
+    .userName {
+        font-size: 1.2rem;
+    }
+
+    .descriptionLabel {
+        font-size: 0.9rem;
+    }
+
+    .descriptionForm textarea {
+        font-size: 0.9rem;
+        padding: 8px;
+    }
+
+    .descriptionForm button {
+        font-size: 0.9rem;
+        padding: 8px 12px;
+    }
+
+    .userDescription {
+        font-size: 0.9rem;
+    }
+}

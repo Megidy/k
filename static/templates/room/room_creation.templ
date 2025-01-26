@@ -1,0 +1,39 @@
+package room
+
+import "github.com/Megidy/k/static/templates/components"
+
+templ LoadCreationOfRoom() {
+	<head>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<script src="https://unpkg.com/htmx.org@1.9.2"></script>
+		<title>Create Room</title>
+		<link rel="stylesheet" href="/static/css/room/roomCreation.css">
+	</head>
+	<body>
+		@components.TopNavBar()
+		<div class="roomCreationWrapper">
+			<div class="room">
+				<form hx-post="/room/create/confirm">
+					<div class="form-group">
+						<label for="code">number of players</label>
+						<input type="number" id="players" name="players" min="1" max="50"placeholder="1-50 players "  required/>
+					</div>
+					<div class="form-group">
+						<label for="questions">number of questions</label>
+						<input type="number" id="questions" name="questions" min="5" max="20" placeholder="5-20 questions" required/>
+					</div>
+					<div class="form-group">
+						<label>What would you like to do?</label>
+						<input type="radio" id="play" name="type" value="I want to play" required/>
+						<label for="play">play</label>
+						<br/>
+						<input type="radio" id="observe" name="type" value="I want to see what players are doing" required/>
+						<label for="observe">spectate</label>
+					</div>
+					<button type="submit" class="btn">Confirm</button>
+				</form>
+			</div>
+		</div>
+	</body>
+}

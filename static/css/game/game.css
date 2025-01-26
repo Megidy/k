@@ -1,0 +1,196 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    flex-direction: column;
+    background: #7c49f1;
+    animation: backgroundColorShift 30s ease infinite;
+}
+
+@keyframes backgroundColorShift {
+    0% {
+        background: #7c49f1;
+    }
+
+    25% {
+        background: #71b7e6;
+    }
+
+    50% {
+        background: #9b59b6;
+    }
+
+    75% {
+        background: #f3a683;
+    }
+
+    100% {
+        background: #7c49f1;
+    }
+}
+
+.gameWrapper {
+    margin-top: 60px;
+}
+
+.gameClass {
+    background-color: #E8FAF9;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 300px;
+}
+
+body {
+    margin: 0;
+    font-family: 'Lato', Arial, sans-serif;
+    background: linear-gradient(135deg, #71b7e6, #9b59b6);
+    background-attachment: fixed;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #333;
+}
+
+.game-container {
+    display: block;
+    width: 400px;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.game-header {
+    text-align: center;
+    font-size: 1.5em;
+    margin-bottom: 20px;
+    color: #9b59b6;
+}
+
+#leaderboard {
+    margin-bottom: 20px;
+}
+
+#time {
+    font-size: 1.2em;
+    font-weight: bold;
+    text-align: center;
+    color: #333;
+}
+
+#game {
+    text-align: center;
+}
+
+#game p {
+    font-size: 1em;
+    margin-bottom: 20px;
+    color: #666;
+}
+#beforeGameForceStart{
+    background-color: #9b59b6;
+    color: #ffffff;
+    font-size: 1em;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#beforeGameForceStart:hover {
+    background-color: #7c51a1;
+}
+
+#game button {
+    background-color: #9b59b6;
+    color: #ffffff;
+    font-size: 1em;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#game button:hover {
+    background-color: #7c51a1;
+}
+/* 
+#beforeGameWait {
+    width: 300px;
+    background: #f0f0f0;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+} */
+#leaderboard ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+#leaderboard li {
+    font-size: 1em;
+    font-weight: bold;
+    color: #fff;
+    text-align: center;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 5px;
+}
+
+/* Different background colors for each rank */
+#leaderboard li:nth-child(1) {
+    background-color: #ff6f61; /* Red */
+}
+
+#leaderboard li:nth-child(2) {
+    background-color: #ff8e72; /* Light Red */
+}
+
+#leaderboard li:nth-child(3) {
+    background-color: #3c6e71; /* Dark Blue */
+}
+
+#leaderboard li:nth-child(4) {
+    background-color: #5390d9; /* Blue */
+}
+
+#leaderboard li:nth-child(5) {
+    background-color: #41b3a3; /* Teal */
+}
+#beforeGameWait p {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+#beforeGameWait ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+#beforeGameWait li {
+    font-size: 1em;
+    font-weight: bold;
+    color: #fff;
+    text-align: center;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 5px;
+    background-color: #5390d9; /* Default color */
+}
+
+
+#beforeGameWait li:nth-child(odd) {
+    background-color: #41b3a3;
+}

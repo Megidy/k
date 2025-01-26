@@ -23,11 +23,14 @@ type ownerStruct struct {
 	playStyle int
 }
 
+// !!
+// TEST WITH MUTEXES , IF IT WILL OCCUR ERRORS THAN CHECK PREVIOUS COMMITS TO REVERT CHANGES
+// !!
+
 // TO DO
 // 1 create timer which will later be dependent on the time of question || HALF DONE
-// 2 create force start of the game || DONE
-// 3 make oportunity for owner of the session to spectate and collect data or play whith players || DONE
-// 4 if 0 connection and game is not started and noone connects for 120 seconds , than delete room
+// 2 if 0 connection and game is not started and noone connects for 120 seconds , than delete room ||DONE
+
 type Manager struct {
 	//owner
 	owner ownerStruct
@@ -44,7 +47,7 @@ type Manager struct {
 	//number of questions
 	numberOfQuestions int
 	//mutex for concurenct safe reading and writing
-	mu sync.Mutex
+	mu sync.RWMutex
 	//context
 	ctx context.Context
 	//cancel func of context
@@ -102,12 +105,18 @@ type Manager struct {
 	updateInnerLeaderboardCh chan bool
 	//channel to write real-time leaderboard for specator
 	writeInnerLeaderboardCh chan []types.Player
+	//channel to update before game reset of ticker to prevent self-liquidation of game
+	updateBeforeGameTickerCh chan bool
+	//chennel to stop ticker
+	stopBeforeGameTickerCh chan bool
 }
 
-//constructor
-
+// constructor
 func NewManager(owner, roomID string, playstyle, numberOfPlayers, amountOfQuestions int, questions []types.Question) *Manager {
 	ctx, cancel := context.WithCancel(context.Background())
+	if amountOfQuestions > len(questions) {
+		amountOfQuestions = len(questions)
+	}
 	manager := &Manager{
 		owner:                    ownerStruct{username: owner, playStyle: playstyle},
 		roomID:                   roomID,
@@ -115,7 +124,7 @@ func NewManager(owner, roomID string, playstyle, numberOfPlayers, amountOfQuesti
 		numberOfQuestions:        amountOfQuestions,
 		currTime:                 10,
 		questions:                questions,
-		mu:                       sync.Mutex{},
+		mu:                       sync.RWMutex{},
 		ctx:                      ctx,
 		cancel:                   cancel,
 		currentQuestion:          questions[0],
@@ -141,18 +150,21 @@ func NewManager(owner, roomID string, playstyle, numberOfPlayers, amountOfQuesti
 		restartTimeCh:            make(chan bool),
 		updateInnerLeaderboardCh: make(chan bool),
 		writeInnerLeaderboardCh:  make(chan []types.Player),
+		updateBeforeGameTickerCh: make(chan bool),
+		stopBeforeGameTickerCh:   make(chan bool),
 	}
 	go manager.Writer()
 	go manager.ClientsStatusHandler()
 	go manager.QuestionHandler()
 	go manager.WaitListHandler()
 	go manager.StartGame()
+	go manager.BeforeGameLiquidationHandler()
+
 	log.Println("manager : ", manager)
 	return manager
 }
 
-//function to handle scoreness of client
-
+// function to handle scoreness of client
 func (m *Manager) ScoreHandler(client *Client, requestData *types.RequestData) {
 
 	//getting current question
@@ -161,40 +173,53 @@ func (m *Manager) ScoreHandler(client *Client, requestData *types.RequestData) {
 	//comparing data
 	if requestData.Answer == question.CorrectAnswer {
 		log.Println("added point for : ", client.userName)
+		//updating score
+		client.mu.Lock()
 		client.score++
+		client.mu.Unlock()
+		//updating leaderboard
 		m.mu.Lock()
 		m.leaderBoard[client.userName]++
 		m.mu.Unlock()
 
 	}
+	//updating inner leaderboard only if playstyle is spectator
 	if m.owner.playStyle == 2 {
 		m.updateInnerLeaderboardCh <- true
 	}
 
 }
 
-//function which handles connection of clients
-
+// function which handles connection of clients
 func (m *Manager) AddClientToConnectionPool(client *Client) bool {
 	//varriable to check if client was in game before(was in stock map)
 	var wasInGameBefore bool
+	//checking if client is owner
+
 	if client.userName == m.owner.username && m.owner.playStyle == 2 {
+		client.mu.Lock()
+		//updating connection
 		m.owner.client = client
+		//setting online as true to prevent issues with writing
 		client.isOnline = true
 		client.currQuestion = m.numberOfCurrentQuestion
+		client.mu.Unlock()
 		log.Println("Added owner to connection pool : ", client.userName)
 		log.Println("owners online status : ", m.owner.client.isOnline)
+		//updating gameConnection for owner , !not writing spectator to them!
 		if m.gameState == 0 {
 			m.beforeGameConnection <- true
 		}
 	} else {
-		m.mu.Lock()
 
 		//checking if client was connected before
+		m.mu.RLock()
 		c, ok1 := m.stockMap[client.userName]
+		m.mu.RUnlock()
 		if ok1 {
 			//checking if he is joining to the game on the same question on which he leaved ,
 			//if yes than handle isReady field,otherwise just set false , because he connected to new question
+			c.mu.Lock()
 			if c.currQuestion == m.numberOfCurrentQuestion {
 				//if he was ready than set isReady=true, otherwise false
 				if c.isReady {
@@ -211,18 +236,26 @@ func (m *Manager) AddClientToConnectionPool(client *Client) bool {
 			client.currQuestion = c.currQuestion
 			//same thing with score ,purpose of this is just ot handle correctess of results
 			client.score = c.score
+			c.mu.Unlock()
+
 			//than deleting client from stockMap , because he connected
+			m.mu.Lock()
 			delete(m.stockMap, c.userName)
+			m.mu.Unlock()
 			//and setting wasInGameBefore = true becuase he appeared in stockMap before
 			wasInGameBefore = true
 		} else {
 			wasInGameBefore = false
 		}
-		//than adding this user to map
+		//setting client as online ,because he connected
+		client.mu.Lock()
 		client.isOnline = true
+		client.mu.Unlock()
+		//than adding this user to map
+		m.mu.Lock()
 		m.clientsMap[client.userName] = client
-		log.Println("Added new client to connection pool : ", client.userName)
 		m.mu.Unlock()
+		log.Println("Added new client to connection pool : ", client.userName)
 		// this checking of game state was made for writing to beforeGameCh for each client, so if gameState=0 ,than game didnt started yet
 		// so this updates list of players who is connected now
 		if m.gameState == 0 {
@@ -233,27 +266,31 @@ func (m *Manager) AddClientToConnectionPool(client *Client) bool {
 	return wasInGameBefore
 }
 
-//function to delete client from connection pool and from globalRoomManager
-
+// function to delete client from connection pool and from globalRoomManager
 func (m *Manager) DeleteClientFromConnectionPool(client *Client) {
+	//checking if deleting owner
 	if client.userName == m.owner.username && m.owner.playStyle == 2 {
 		log.Println("deleted owner : ", client.userName)
+		m.owner.client.mu.Lock()
 		m.owner.client.isOnline = false
+		m.owner.client.mu.Unlock()
 		globalRoomManager.DeleteConnectionFromList(m, client.userName)
 		log.Println("owners online status : ", m.owner.client.isOnline)
 
 	} else {
-		m.mu.Lock()
+
 		//removing client from waitList to update him for other players
 		m.removeClientFromWaitList <- client
-		//checking if game is started , if yes than setting him to stockMap
-		//purpose of this check , if players leaves before game started it will make errors
-		m.stockMap[client.userName] = client
 		//setting online status as false ,because client leaved
+		client.mu.Lock()
 		client.isOnline = false
+		client.mu.Unlock()
+		//deleting client from main map and adding to stash
+		m.mu.Lock()
+		m.stockMap[client.userName] = client
 		delete(m.clientsMap, client.userName)
-		log.Println("deleted from clientsMap username : ", client.userName)
 		m.mu.Unlock()
+		log.Println("deleted from clientsMap username : ", client.userName)
 		//deleteting from globalRoomManager
 		globalRoomManager.DeleteConnectionFromList(m, client.userName)
 		//updating beforeGame list of players
@@ -264,32 +301,8 @@ func (m *Manager) DeleteClientFromConnectionPool(client *Client) {
 
 }
 
-//Funtion to handle Websocket connection and handle creating of client
-
-func (m *Manager) NewConnection(c *gin.Context) {
-	//getting user from data
-	u, _ := c.Get("user")
-	user := u.(*types.User)
-
-	//upgrading connection aka 'handshake'
-	wsConn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
-	if err != nil {
-		log.Println("error while creating websocket connection : ", err)
-		return
-	}
-
-	//creating new client
-	client := NewClient(user.UserName, wsConn, m, c)
-
-	//adding him to connection pool, meanwhile cheking if he was connected before
-	wasInGameBefore := m.AddClientToConnectionPool(client)
-	globalRoomManager.AddConnectionToList(m, client.userName)
-
-	//starting w/r pumps
-	m.clientsConnectionCh <- client
-
-	// channel for waiting start of the game
-	<-m.startGameCh
+// function to correctly write data to different client
+func (m *Manager) WriteDataWithConnection(client *Client, wasInGameBefore bool) {
 	//purpose of this check : handle updates in render ONLY if game is started, because it could occur error
 	if m.gameState != 0 {
 		//checking if player was in game before
@@ -310,6 +323,9 @@ func (m *Manager) NewConnection(c *gin.Context) {
 				if client.isOnline {
 					if client.isReady {
 						m.overwriteListCh <- client.userName
+						if m.gameState != 0 {
+							m.overwriteTimeCh <- client
+						}
 					} else {
 						m.addClientToWaitList <- client
 						m.overwriteQuestionCh <- client.userName
@@ -336,19 +352,48 @@ func (m *Manager) NewConnection(c *gin.Context) {
 		}
 
 	}
-
 }
 
-//function to handle writing to players
+// Function to handle Websocket connection and handle creating of client
+func (m *Manager) NewConnection(c *gin.Context) {
+	//getting user from data
+	u, _ := c.Get("user")
+	user := u.(*types.User)
 
+	//upgrading connection aka 'handshake'
+	wsConn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		log.Println("error while creating websocket connection : ", err)
+		return
+	}
+
+	//creating new client
+	client := NewClient(user.UserName, wsConn, m)
+
+	//adding him to connection pool, meanwhile cheking if he was connected before
+	wasInGameBefore := m.AddClientToConnectionPool(client)
+	globalRoomManager.AddConnectionToList(m, client.userName)
+
+	//starting w/r pumps
+	m.clientsConnectionCh <- client
+
+	// channel for waiting start of the game
+	<-m.startGameCh
+
+	m.WriteDataWithConnection(client, wasInGameBefore)
+}
+
+// function to handle writing to players
 func (m *Manager) Writer() {
 	defer func() {
 		log.Println("MESSAGE QUEUE | exited goroutine")
 		close(m.overwriteListCh)
 		close(m.overwriteQuestionCh)
+		close(m.overwriteTimeCh)
 		close(m.readyCh)
 		close(m.clientsConnectionCh)
 		close(m.addClientToWaitList)
+		close(m.updateInnerLeaderboardCh)
 		globalRoomManager.EndRoomSession(m.roomID)
 	}()
 	for {
@@ -359,116 +404,141 @@ func (m *Manager) Writer() {
 				log.Println("tried to read from closed changeQuestionCh in MessageQueue")
 				return
 			}
-
-			m.mu.Lock()
+			//checking if owner is spectator and is online to render for him
 			if m.owner.playStyle == 2 && m.owner.client.isOnline {
 				m.owner.client.questionCh <- m.currentQuestion
 			}
+
+			//!!
+			//TEST WITH MUTEXES , IF IT WILL OCCUR ERRORS THAN CHECK PREVIOUS COMMITS TO REVERT CHANGES
+			//!!
 			//writing the question for all players
+			m.mu.RLock()
 			for _, client := range m.clientsMap {
-				// m.waitList = append(m.waitList, client.userName)
+				client.mu.Lock()
 				client.currQuestion = m.numberOfCurrentQuestion
 				client.isReady = false
+				client.mu.Unlock()
 				client.questionCh <- m.currentQuestion
 			}
-			m.mu.Unlock()
+			m.mu.RUnlock()
 		//write curr question for new client
 		case _, ok := <-m.writeListCh:
 			if !ok {
 				log.Println("tried to read from closed changeListCh in MessageQueue")
 				return
 			}
-			m.mu.Lock()
+
+			//checking if owner is spectator and is online to render for him
 			if m.owner.playStyle == 2 && m.owner.client.isOnline {
 				m.owner.client.writeWaitCh <- m.waitList
 			}
 			//writing wait list for all players who is not ready
+			m.mu.RLock()
 			for _, client := range m.clientsMap {
+				client.mu.Lock()
 				if client.isReady {
 					client.writeWaitCh <- m.waitList
 				}
+				client.mu.Unlock()
 			}
-			m.mu.Unlock()
+			m.mu.RUnlock()
 		//write curr questine for new client
 		case username, ok := <-m.overwriteQuestionCh:
 			if !ok {
 				log.Println("tried to read from closed overwriteQuestionCh in MessageQueue")
 				return
 			}
-			m.mu.Lock()
+			//checking if username is owners username nad he is online to overwrite question
 			if username == m.owner.username && m.owner.playStyle == 2 {
+				m.owner.client.mu.Lock()
 				if m.owner.client.isOnline {
 					m.owner.client.questionCh <- m.currentQuestion
 				}
+				m.owner.client.mu.Unlock()
 			} else {
-				//writing question for player who connected and is ready
+				//getting user
+				m.mu.RLock()
 				client := m.clientsMap[username]
+				m.mu.RUnlock()
+				//writing question for player who connected and is ready
+				client.mu.Lock()
 				client.isReady = false
 				client.currQuestion = m.numberOfCurrentQuestion
+				client.mu.Unlock()
 				client.questionCh <- m.currentQuestion
 			}
 
-			m.mu.Unlock()
 		//write list of not done clients if client is answered question
 		case username, ok := <-m.overwriteListCh:
 			if !ok {
 				log.Println("tried to read from closed overwriteListCh in MessageQueue")
 				return
 			}
-			m.mu.Lock()
+			//checking if username is owners username nad he is online to overwrite question
 			if username == m.owner.username && m.owner.playStyle == 2 {
+				m.owner.client.mu.Lock()
 				if m.owner.client.isOnline {
 					m.owner.client.writeWaitCh <- m.waitList
 				}
+				m.owner.client.mu.Unlock()
 			} else {
 				//writin waitList to new connected player
+				m.mu.RLock()
 				client := m.clientsMap[username]
+				m.mu.RUnlock()
 				client.writeWaitCh <- m.waitList
 			}
 
-			m.mu.Unlock()
 		//write leaderboard to all connected players
 		case players, ok := <-m.writeLeaderBoardCh:
 			if !ok {
 				log.Println("tried to read from closed loadLeaderBoardCh in MessageQueue")
 				return
 			}
-			m.mu.Lock()
+
+			//checking if owner is spectator and is online to render for him
 			if m.owner.playStyle == 2 && m.owner.client.isOnline {
 				m.owner.client.leaderBoardCh <- players
 			}
+			//writing leaderboard to all connected players
+			m.mu.RLock()
 			for _, client := range m.clientsMap {
 				client.leaderBoardCh <- players
 			}
-			m.mu.Unlock()
+			m.mu.RUnlock()
+			//calling context cancle func which will end end all goroutines and which will close all channels
 			m.cancel()
 			return
 
-			//writing leaderboard to all connected players
-
-			//calling context cancle func which will end end all goroutines and which will close all channels
+		//case to handle update for spectator
 		case players := <-m.writeInnerLeaderboardCh:
-			m.mu.Lock()
+			//updating inner leaderboard for render
+			//checking if owner is spectator and is online to render for him
 			if m.owner.playStyle == 2 && m.owner.client.isOnline {
 				m.owner.client.innerLeaderBoardCh <- players
 			}
-			m.mu.Unlock()
-
+		//case to handle update for time
 		case <-m.writeTimeCh:
-			m.mu.Lock()
+			//checking if owner is spectator and is online to render for him
 			if m.owner.playStyle == 2 && m.owner.client.isOnline {
 				m.owner.client.timeWriterCh <- m.currTime
 			}
+			//updating for all clients
+			m.mu.RLock()
 			for _, client := range m.clientsMap {
 				client.timeWriterCh <- m.currTime
 			}
-			m.mu.Unlock()
-
+			m.mu.RUnlock()
+		//case to overwrite time for connected client
 		case client := <-m.overwriteTimeCh:
+			//checking if username is owners username nad he is online to overwrite question
 			if client.userName == m.owner.username && m.owner.playStyle == 2 {
+				m.owner.client.mu.Lock()
 				if client.isOnline {
 					m.owner.client.timeWriterCh <- m.currTime
 				}
+				m.owner.client.mu.Unlock()
 			} else {
 				client.timeWriterCh <- m.currTime
 
@@ -477,10 +547,9 @@ func (m *Manager) Writer() {
 	}
 }
 
-//function to handle status of clients such as :
-//1 readiness
-//2 connection
-
+// function to handle status of clients such as :
+// 1 readiness
+// 2 connection
 func (m *Manager) ClientsStatusHandler() {
 	defer func() {
 		log.Println("CLIENTSSTATUSHANDLER | exited goroutine")
@@ -497,7 +566,9 @@ func (m *Manager) ClientsStatusHandler() {
 				return
 			}
 			//setting client ready status to true
+			client.mu.Lock()
 			client.isReady = true
+			client.mu.Unlock()
 			//removing him from waitList
 			m.removeClientFromWaitList <- client
 		//case to handle connection
@@ -522,8 +593,7 @@ func (m *Manager) ClientsStatusHandler() {
 	}
 }
 
-//function to handle list update
-
+// function to handle list update
 func (m *Manager) WaitListHandler() {
 	defer func() {
 		log.Println("WAITLISTHANDLER | exited goroutine")
@@ -540,6 +610,8 @@ func (m *Manager) WaitListHandler() {
 				log.Println("tried to read from closed addClientToWaitList in WaitListHandler")
 				return
 			}
+			//!!
+			//should be tested , maybe this also needs with mutex
 			m.waitList = append(m.waitList, client.userName)
 			m.writeListCh <- true
 		//case to remove client from wait list
@@ -560,9 +632,9 @@ func (m *Manager) WaitListHandler() {
 			}
 			//set the waitList as a temp one
 			m.waitList = newWaitList
-			m.mu.Lock()
+			m.mu.RLock()
 			length := len(m.clientsMap)
-			m.mu.Unlock()
+			m.mu.RUnlock()
 			// puprose of this check
 			// len(m.waitList) == 0 is to check if waitList is empty -> everyone is ready than update question
 			// length != 0 is to check if there are connected clients left, this check is important one , because for example:
@@ -592,13 +664,14 @@ func (m *Manager) WaitListHandler() {
 	}
 }
 
-//function to handle question changes and leaderboard
-
+// function to handle question changes and leaderboard
 func (m *Manager) QuestionHandler() {
 	defer func() {
 		log.Println("QUESTIONHANDLER | exited goroutine")
 		close(m.writeQuestionCh)
 		close(m.writeLeaderBoardCh)
+		close(m.writeInnerLeaderboardCh)
+		close(m.restartTimeCh)
 	}()
 	for {
 		select {
@@ -621,7 +694,7 @@ func (m *Manager) QuestionHandler() {
 				log.Println("game ended")
 				//creating leaderboard map
 				var leaderBoard = make(map[string]int)
-				m.mu.Lock()
+				m.mu.RLock()
 				//looping through the client map to fill leaderboard
 				for name, client := range m.clientsMap {
 					leaderBoard[name] = client.score
@@ -630,7 +703,7 @@ func (m *Manager) QuestionHandler() {
 				for name, client := range m.stockMap {
 					leaderBoard[name] = client.score
 				}
-				m.mu.Unlock()
+				m.mu.RUnlock()
 				m.gameState = -1
 				//filling and sorting
 				players := make([]types.Player, 0)
@@ -659,8 +732,8 @@ func (m *Manager) QuestionHandler() {
 
 			}
 		case <-m.updateInnerLeaderboardCh:
-			m.mu.Lock()
 			players := make([]types.Player, 0)
+			m.mu.RLock()
 			for name, points := range m.leaderBoard {
 				players = append(players, types.Player{Username: name, Score: points})
 			}
@@ -668,15 +741,13 @@ func (m *Manager) QuestionHandler() {
 				return players[i].Score > players[j].Score
 
 			})
-			m.mu.Unlock()
+			m.mu.RUnlock()
 			m.writeInnerLeaderboardCh <- players
-
 		}
 	}
 }
 
-//function to hande start of the game and list of players who is connected
-
+// function to hande start of the game and list of players who is connected
 func (m *Manager) StartGame() {
 	defer func() {
 		log.Println("STARTGAME | GAME STARTED!")
@@ -690,7 +761,7 @@ func (m *Manager) StartGame() {
 		select {
 		//case to handle connection
 		case <-m.beforeGameConnection:
-			m.mu.Lock()
+			m.mu.RLock()
 			//updating list of players
 			var listOfPlayers []string
 			for username := range m.clientsMap {
@@ -705,20 +776,22 @@ func (m *Manager) StartGame() {
 				client.beforeGameWriterCh <- listOfPlayers
 			}
 			length := len(m.clientsMap)
-			m.mu.Unlock()
+			m.mu.RUnlock()
 			//checking if lobby is full
 			if length == m.maxPlayers {
 				m.startGameCh <- true
 				m.writeQuestionCh <- true
+				m.stopBeforeGameTickerCh <- true
 				m.gameState = 1
-				go m.TimeHandler()
+				go m.GameTimeHandler()
 				return
 			}
+			m.updateBeforeGameTickerCh <- true
 			log.Println("addded connection to before game state ,current list : ", listOfPlayers)
 		//case to handle client leave
 		case <-m.beforeGameLeave:
 			//overwrite list
-			m.mu.Lock()
+			m.mu.RLock()
 			var listOfPlayers []string
 			for username := range m.clientsMap {
 				listOfPlayers = append(listOfPlayers, username)
@@ -731,25 +804,26 @@ func (m *Manager) StartGame() {
 			for _, client := range m.clientsMap {
 				client.beforeGameWriterCh <- listOfPlayers
 			}
-			m.mu.Unlock()
+			m.mu.RUnlock()
 			log.Println("deleted connection from before game state ,current list : ", listOfPlayers)
 		case <-m.forcedStartOfGame:
 			log.Println("force start of game ")
 			m.startGameCh <- true
 			m.writeQuestionCh <- true
+			m.stopBeforeGameTickerCh <- true
 			m.gameState = 1
-			go m.TimeHandler()
+			go m.GameTimeHandler()
 			return
 		}
 	}
 }
 
 // function to handle time updates
-
-func (m *Manager) TimeHandler() {
+func (m *Manager) GameTimeHandler() {
 	ticker := time.NewTicker(time.Second * 1)
 	defer func() {
 		ticker.Stop()
+		close(m.writeTimeCh)
 	}()
 	var count int = 10
 	for {
@@ -758,24 +832,23 @@ func (m *Manager) TimeHandler() {
 			return
 		case <-ticker.C:
 			count--
+			//checking if time is up
 			if count == 0 {
-				//dont forget to overwrite waitlist
+				//updating counter
 				count = 10
 				m.currTime = count
 
 				var tempWaitList []string
-				m.mu.Lock()
+				m.mu.RLock()
 				for username := range m.clientsMap {
 					tempWaitList = append(tempWaitList, username)
 				}
-				m.mu.Unlock()
+				m.mu.RUnlock()
 				m.waitList = tempWaitList
-
 				m.updateQuestionCh <- true
 				m.writeTimeCh <- true
 			} else {
 				m.currTime = count
-				log.Println("tick : ", count)
 				m.writeTimeCh <- true
 			}
 		case <-m.restartTimeCh:
@@ -783,6 +856,33 @@ func (m *Manager) TimeHandler() {
 			count = 10
 			m.currTime = count
 			m.writeTimeCh <- true
+		}
+
+	}
+}
+
+func (m *Manager) BeforeGameLiquidationHandler() {
+	ticker := time.NewTicker(time.Second * 1)
+	counter := 360
+	defer func() {
+		log.Println("room will not liquidate itself :)")
+		ticker.Stop()
+		close(m.updateBeforeGameTickerCh)
+		close(m.stopBeforeGameTickerCh)
+	}()
+	for {
+		select {
+		case <-m.updateBeforeGameTickerCh:
+			ticker.Reset(time.Second)
+			counter = 360
+		case <-ticker.C:
+			counter--
+			if counter == 0 {
+				m.cancel()
+				return
+			}
+		case <-m.stopBeforeGameTickerCh:
+			return
 		}
 
 	}

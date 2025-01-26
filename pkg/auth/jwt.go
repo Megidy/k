@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -24,12 +25,14 @@ func (h *Handler) WithJWT(c *gin.Context) {
 
 	tokenString, err := c.Cookie("Authorization")
 	if err != nil {
+		log.Println("error : ", err)
 		c.Writer.Header().Add("authorization", "false")
 		RedirectToLogin(c)
 		return
 	}
 	token, err := ValidateJWT(tokenString)
 	if err != nil {
+		log.Println("error : ", err)
 		c.Writer.Header().Add("authorization", "false")
 		RedirectToLogin(c)
 		return
@@ -43,6 +46,7 @@ func (h *Handler) WithJWT(c *gin.Context) {
 		id := claims["userID"].(string)
 		user, err := h.UserStore.GetUserById(id)
 		if err != nil {
+			log.Println("error : ", err)
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
@@ -67,6 +71,7 @@ func CreateJWT(secret []byte, userId string) (string, error) {
 	})
 	tokenString, err := token.SignedString(secret)
 	if err != nil {
+		log.Println("error : ", err)
 		return "", err
 	}
 	return tokenString, nil

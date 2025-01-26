@@ -1,0 +1,115 @@
+@import url('https://fonts.googleapis.com/css?family=Lato');
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-attachment: fixed;
+    padding-top: 60px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(135deg, #9b59b6, #71b7e6,#e094fc , #3698da);
+    background-size: 400% 400%; 
+    animation: gradientShift 10s ease infinite; 
+
+}
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%; 
+    }
+    50% {
+        background-position: 100% 50%; 
+    }
+    100% {
+        background-position: 0% 50%; 
+    }
+}
+
+
+.topic-selection-container {
+    display: block;
+    position: relative;
+    margin: 20px auto;
+    width: 350px;
+
+    padding: 15px;
+    background: #E8FAF9;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+
+}
+
+.topic-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.topic-section {
+  
+    max-height: 400px;
+    /* Set a max height for the container */
+    overflow-y: auto;
+    /* Enable vertical scrolling */
+    margin-bottom: 20px;
+}
+
+.section-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.topic-option {
+    margin-bottom: 15px;
+}
+
+.topic-option input[type=radio] {
+    display: none;
+}
+
+.topic-label {
+    display: block;
+    font-weight: 400;
+    font-size: 1em;
+    padding: 8px 15px;
+    background: #f9f9f9;
+    border: 1px solid #BBADDB;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s, border-color 0.3s, color 0.3s;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.topic-label:hover {
+    background: #f0f0f0;
+    border-color: #bbb;
+}
+
+.topic-option input[type=radio]:checked+label {
+    background: #accb3c;
+    border-color: #accb3c;
+    color: #E8FAF9;
+}
+
+.topic-option input[type=radio]:checked+label:hover {
+    background: #accb3c;
+}
+
+.confirm-btn {
+    display: block;
+    width: 100%;
+    padding: 8px;
+    margin-top: 15px;
+    background-color: #9564BC;
+    border: none;
+    border-radius: 5px;
+    color: #E8FAF9;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.confirm-btn:hover {
+    background-color: #7c51a1;
+}

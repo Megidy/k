@@ -1,0 +1,37 @@
+package user
+
+import (
+	"github.com/Megidy/k/static/templates/components"
+	"github.com/Megidy/k/types"
+	"fmt"
+)
+
+templ LoadUserAccount(user *types.User, isOwner bool) {
+	@components.TopNavBar()
+	<head>
+		<script src="https://unpkg.com/htmx.org@1.9.2"></script>
+		<title>{ user.UserName }</title>
+		<link rel="stylesheet" href="/static/css/user/account.css" />
+	</head>
+	<body>
+		<div id="profile" class="profile">
+		<div id="profilePicture" class="profilePicture">
+			<img src={fmt.Sprintf("%s",user.ProfilePicture)}>
+		</div>
+			<div id="userName" class="userName">{ user.UserName }</div>
+			if isOwner {
+				<div id="descriptionLabel" class="descriptionLabel" >Your Description :</div>
+				<form id="descriptionForm" class="descriptionForm"  hx-post="/account/info/description/confirm" hx-swap="outerHTML">
+					<textarea id="descriptionInput" class="descriptionInput" rows="4" cols="40" name="description" maxlength="200">
+						{ user.Description }
+					</textarea>
+					<br/>
+					<button type="submit" id="setDescriptionButton" class="btn">Set Description</button>
+				</form>
+			} else {
+				<div id="descriptionLabel" class="descriptionLabel">Description: </div>
+				<div id="userDescription" class="userDescription">{ user.Description }</div>
+			}
+		</div>
+	</body>
+}
