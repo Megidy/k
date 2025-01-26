@@ -42,7 +42,7 @@ func (s *Server) Run() error {
 
 	//userHandler
 	userHandler := user.NewUserHandler(userStore, clientSideHandler)
-	userHandler.RegisterRoutes(router)
+	userHandler.RegisterRoutes(router, authHandler)
 
 	//gameHandler
 	gameHandler := game.NewGameHandler(clientSideHandler, gameStore)
