@@ -81,7 +81,7 @@ func Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSp
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h4></div><div id=\"leaderboard\"><div id=\"time\"><div id=\"spectator\"><p>You are spectating , so you can't play , just watch the current results </p><button type=\"submit\" ws-send>force start</button><div id=\"beforeGameWait\"></div></div></div><div id=\"innerLeaderboard\"></div><div id=\"currQuestion\"></div><div id=\"currNotReadyPlayers\"></div></div></div>")
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h4></div><div id=\"leaderboard\"><div id=\"time\"><div id=\"spectator\"><p>You are spectating , so you can't play , just watch the current results </p><button type=\"submit\" id=\"beforeGameForceStart\" ws-send>force start</button><div id=\"beforeGameWait\"></div></div></div><div id=\"innerLeaderboard\"></div><div id=\"currQuestion\"></div><div id=\"currNotReadyPlayers\"></div></div></div>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
