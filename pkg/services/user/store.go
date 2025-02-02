@@ -1,10 +1,14 @@
 package user
 
 import (
+	"context"
 	"database/sql"
+	"encoding/json"
 	"math/rand"
+	"time"
 
 	"github.com/Megidy/k/types"
+	"github.com/redis/go-redis/v9"
 )
 
 var pictures = []string{
@@ -16,11 +20,12 @@ var pictures = []string{
 }
 
 type store struct {
-	db *sql.DB
+	db      *sql.DB
+	redisDB *redis.Client
 }
 
-func NewStore(db *sql.DB) *store {
-	return &store{db: db}
+func NewStore(db *sql.DB, redisDB *redis.Client) *store {
+	return &store{db: db, redisDB: redisDB}
 }
 
 func (s *store) GetUserById(id string) (*types.User, error) {
@@ -80,4 +85,50 @@ func (s *store) UpdateDescription(userID, description string) error {
 	}
 
 	return nil
+}
+
+func (s *store) CacheUserGameScore(username, score, place, topicName string) error {
+	cacheKey := "user:" + username + ":leaderboard"
+	ctx := context.Background()
+
+	val, err := s.redisDB.Get(ctx, cacheKey).Result()
+	if err != nil && err != redis.Nil {
+		return err
+	}
+
+	var leaderBoard []types.UserLeaderBoard
+	if val != "" {
+		if err := json.Unmarshal([]byte(val), &leaderBoard); err != nil {
+			return err
+		}
+	}
+
+	leaderBoard = append(leaderBoard, types.UserLeaderBoard{Score: score, Place: place, TopicName: topicName})
+
+	jsonData, err := json.Marshal(leaderBoard)
+	if err != nil {
+		return err
+	}
+
+	return s.redisDB.Set(ctx, cacheKey, jsonData, time.Second*60).Err()
+}
+
+func (s *store) GetUserGameScore(username string) ([]types.UserLeaderBoard, bool, error) {
+	cacheKey := "user:" + username + ":leaderboard"
+	ctx := context.Background()
+
+	val, err := s.redisDB.Get(ctx, cacheKey).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
+
+	var leaderBoard []types.UserLeaderBoard
+	if err := json.Unmarshal([]byte(val), &leaderBoard); err != nil {
+		return nil, false, err
+	}
+
+	return leaderBoard, true, nil
 }
