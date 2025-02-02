@@ -10,6 +10,13 @@ type User struct {
 	Description    string
 	ProfilePicture string
 }
+
+type UserLeaderBoard struct {
+	TopicName string `json:"topic_name"`
+	Score     string `json:"score"`
+	Place     string `json:"place"`
+}
+
 type Player struct {
 	Username string
 	Score    int
@@ -53,4 +60,6 @@ type UserStore interface {
 	UserExists(user *User) (bool, error)
 	GetUserByEmail(email string) (*User, error)
 	UpdateDescription(userID, description string) error
+	CacheUserGameScore(username, score, place, topicName string) error
+	GetUserGameScore(username string) ([]UserLeaderBoard, bool, error)
 }
