@@ -1,9 +1,9 @@
 package user
 
 import (
+	"fmt"
 	"github.com/Megidy/k/static/templates/components"
 	"github.com/Megidy/k/types"
-	"fmt"
 )
 
 templ LoadUserAccount(user *types.User, isOwner bool) {
@@ -11,17 +11,19 @@ templ LoadUserAccount(user *types.User, isOwner bool) {
 	<head>
 		<script src="https://unpkg.com/htmx.org@1.9.2"></script>
 		<title>{ user.UserName }</title>
-		<link rel="stylesheet" href="/static/css/user/account.css" />
+		<link rel="stylesheet" href="/static/css/user/account.css"/>
 	</head>
 	<body>
 		<div id="profile" class="profile">
-		<div id="profilePicture" class="profilePicture">
-			<img src={fmt.Sprintf("%s",user.ProfilePicture)}>
-		</div>
+			<div id="profilePicture" class="profilePicture">
+				<img src={ fmt.Sprintf("%s", user.ProfilePicture) }/>
+			</div>
 			<div id="userName" class="userName">{ user.UserName }</div>
 			if isOwner {
-				<div id="descriptionLabel" class="descriptionLabel" >Your Description :</div>
-				<form id="descriptionForm" class="descriptionForm"  hx-post="/account/info/description/confirm" hx-swap="outerHTML">
+				<button type="submit" id="GetLeaderboardHistory" class="btn" hx-post="/redirect-to-leaderboard-history">Leaderboard History</button>
+			
+				<div id="descriptionLabel" class="descriptionLabel">Your Description :</div>
+				<form id="descriptionForm" class="descriptionForm" hx-post="/account/info/description/confirm" hx-swap="outerHTML">
 					<textarea id="descriptionInput" class="descriptionInput" rows="4" cols="40" name="description" maxlength="200">
 						{ user.Description }
 					</textarea>

@@ -59,7 +59,7 @@ func LoadUserAccount(user *types.User, isOwner bool) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s", user.ProfilePicture))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/user/account.templ`, Line: 19, Col: 50}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/user/account.templ`, Line: 19, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -83,14 +83,14 @@ func LoadUserAccount(user *types.User, isOwner bool) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if isOwner {
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div id=\"descriptionLabel\" class=\"descriptionLabel\">Your Description :</div><form id=\"descriptionForm\" class=\"descriptionForm\" hx-post=\"/account/info/description/confirm\" hx-swap=\"outerHTML\"><textarea id=\"descriptionInput\" class=\"descriptionInput\" rows=\"4\" cols=\"40\" name=\"description\" maxlength=\"200\">")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<button type=\"submit\" id=\"GetLeaderboardHistory\" class=\"btn\" hx-post=\"/redirect-to-leaderboard-history\">Leaderboard History</button><div id=\"descriptionLabel\" class=\"descriptionLabel\">Your Description :</div><form id=\"descriptionForm\" class=\"descriptionForm\" hx-post=\"/account/info/description/confirm\" hx-swap=\"outerHTML\"><textarea id=\"descriptionInput\" class=\"descriptionInput\" rows=\"4\" cols=\"40\" name=\"description\" maxlength=\"200\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(user.Description)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/user/account.templ`, Line: 26, Col: 24}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/user/account.templ`, Line: 28, Col: 24}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -108,7 +108,7 @@ func LoadUserAccount(user *types.User, isOwner bool) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(user.Description)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/user/account.templ`, Line: 33, Col: 72}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `static/templates/user/account.templ`, Line: 35, Col: 72}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
