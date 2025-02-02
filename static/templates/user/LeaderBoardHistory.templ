@@ -1,0 +1,33 @@
+package user
+
+import (
+	"github.com/Megidy/k/static/templates/components"
+	"github.com/Megidy/k/types"
+)
+
+templ LoadUserLeaderBoardHistory(hasGames bool, leaderBoardHistory []types.UserLeaderBoard) {
+	@components.TopNavBar()
+	<head>
+		<script src="https://unpkg.com/htmx.org@1.9.2"></script>
+		<title>Leaderboard History</title>
+		<link rel="stylesheet" href="/static/css/user/leaderboard.css"/>
+	</head>
+	<body>
+		<div class="leaderboard-container">
+			<h2>Leaderboard History</h2>
+			if hasGames {
+				<div class="leaderboard-list">
+					for _, leaderboard := range leaderBoardHistory {
+						<div class="leaderboard-entry">
+							<span class="place">#{ leaderboard.Place }</span>
+							<span class="score">{ leaderboard.Score } pts</span>
+							<span class="topic-name">{ leaderboard.TopicName }</span>
+						</div>
+					}
+				</div>
+			} else {
+				<div class="no-games">No games found.</div>
+			}
+		</div>
+	</body>
+}
