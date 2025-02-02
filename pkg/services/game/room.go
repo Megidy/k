@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/Megidy/k/types"
+	"github.com/Megidy/k/worker"
 )
 
 // temporary
@@ -19,9 +20,9 @@ var globalRoomManager = &RoomManager{
 	listOfPlayers: make(map[*Manager][]string),
 }
 
-func (rm *RoomManager) CreateRoom(owner, roomID string, numberOfPlayers, playstyleOfOwner, amountOfQuestions int, questions []types.Question) {
+func (rm *RoomManager) CreateRoom(workerPool worker.WorkerManager, owner, roomID string, numberOfPlayers, playstyleOfOwner, amountOfQuestions int, questions []types.Question) {
 
-	manager := NewManager(owner, roomID, playstyleOfOwner, numberOfPlayers, amountOfQuestions, questions)
+	manager := NewManager(workerPool, owner, roomID, playstyleOfOwner, numberOfPlayers, amountOfQuestions, questions)
 	rm.mu.Lock()
 	rm.rooms[roomID] = manager
 	rm.mu.Unlock()
