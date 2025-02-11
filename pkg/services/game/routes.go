@@ -80,7 +80,7 @@ func (h *gameHandler) LoadInfoTempl(c *gin.Context) {
 	log.Println("topic avaible : ", topics)
 	comp := room.LoadInfoPage(topics, []types.Topic{
 		{
-			TopicID: "dfd62fd8-672c-4737-80fe-4dfbedabedda",
+			TopicID: "geo_001",
 			UserID:  "public",
 			Name:    "Geography",
 		},

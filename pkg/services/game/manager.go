@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Megidy/k/config"
 	"github.com/Megidy/k/types"
 	"github.com/Megidy/k/worker"
 	"github.com/gin-gonic/gin"
@@ -33,6 +34,7 @@ type ownerStruct struct {
 // 2 if 0 connection and game is not started and noone connects for 120 seconds , than delete room ||DONE
 
 type Manager struct {
+	config     *config.Config
 	workerPool worker.WorkerManager
 
 	//owner

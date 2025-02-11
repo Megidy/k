@@ -61,12 +61,11 @@ templ CreateQuestion(number int) {
 		<div>
 			<label>Correct Answer is :</label>
 			<input type="number" id={ fmt.Sprintf("correctA-%d", number) } name={ fmt.Sprintf("correctA-%d", number) } min="1" max="4" placeholder="" required/>
-			<br/>
 		</div>
-		<br/>
 		<div>
 			<label>Image (not necessary , only link)</label>
 			<input type="text" id={ fmt.Sprintf("image-%d", number) } name={ fmt.Sprintf("image-%d", number) }/>
 		</div>
+		<br>
 	</div>
 }
