@@ -3,13 +3,15 @@ package main
 import (
 	"log"
 
-	"github.com/Megidy/k/api"
+	"github.com/Megidy/k/cmd/api"
+	"github.com/Megidy/k/config"
 	"github.com/Megidy/k/db"
 )
 
 func main() {
+	cfg := config.NewConfig()
 
-	sqlDB, err := db.NewSQlDB()
+	sqlDB, err := db.NewSQlDB(cfg)
 	if err != nil {
 		log.Fatalln("error when establishing connection to sql db : ", err)
 	}
