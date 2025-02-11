@@ -7,6 +7,7 @@ import (
 	"github.com/Megidy/k/pkg/services/game"
 	"github.com/Megidy/k/pkg/services/user"
 	"github.com/Megidy/k/static/client"
+	"github.com/Megidy/k/worker"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 )
@@ -29,10 +30,13 @@ func (s *Server) Run() error {
 
 	router := gin.Default()
 	router.Static("/static", "./static")
+
 	//initializing of stores
 	gameStore := game.NewGameStore(s.sqlDB, s.redisDB)
-	userStore := user.NewStore(s.sqlDB)
+	userStore := user.NewStore(s.sqlDB, s.redisDB)
 
+	workerPool := worker.NewWorkerPool(userStore, 100)
+	workerPool.Run()
 	//initializing of handlers
 
 	//initialization of auth Service
@@ -45,7 +49,7 @@ func (s *Server) Run() error {
 	userHandler.RegisterRoutes(router, authHandler)
 
 	//gameHandler
-	gameHandler := game.NewGameHandler(clientSideHandler, gameStore)
+	gameHandler := game.NewGameHandler(clientSideHandler, gameStore, workerPool)
 	gameHandler.RegisterRoutes(router, authHandler)
 
 	return router.Run(s.addr)

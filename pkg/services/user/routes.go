@@ -35,6 +35,11 @@ func (h *userHandler) RegisterRoutes(router gin.IRouter, authHandler *auth.Handl
 	router.GET("/account/info", authHandler.WithJWT, h.LoadUserAccount)
 	router.GET("/account/info/:userID", authHandler.WithJWT, h.LoadUserAccount)
 
+	router.GET("/account/info/:userID/leaderboard-history", authHandler.WithJWT, h.LoadUserLeaderBoardHistory)
+	router.GET("/account/info/leaderboard-history", authHandler.WithJWT, h.LoadUserLeaderBoardHistory)
+
+	router.POST("/redirect-to-leaderboard-history", authHandler.WithJWT, h.RedirectToLeaderBoardHistory)
+
 	router.POST("/account/info/description/confirm", authHandler.WithJWT, h.ConfirmDescriptionCreation)
 }
 func (h *userHandler) LoadCreateAccountTempl(c *gin.Context) {
@@ -161,4 +166,47 @@ func (h *userHandler) ConfirmDescriptionCreation(c *gin.Context) {
 	}
 	c.Writer.Header().Add("HX-Redirect", "/account/info")
 
+}
+
+func (h *userHandler) RedirectToLeaderBoardHistory(c *gin.Context) {
+	c.Writer.Header().Add("HX-Redirect", "/account/info/leaderboard-history")
+}
+
+func (h *userHandler) LoadUserLeaderBoardHistory(c *gin.Context) {
+	userID := c.Param("userID")
+
+	if userID != "" {
+		usr, err := h.userStore.GetUserById(userID)
+		if err != nil {
+			log.Println("error : ", err)
+			return
+		}
+
+		if usr.UserName == "" {
+			u, _ := c.Get("user")
+			leaderboard, hasGamesPlayed, err := h.userStore.GetUserGameScore(u.(*types.User).UserName)
+			if err != nil {
+				log.Println("error : ", err)
+				return
+			}
+			user.LoadUserLeaderBoardHistory(hasGamesPlayed, leaderboard).Render(context.Background(), c.Writer)
+
+			return
+		}
+		log.Println("user : ", usr)
+		user.LoadUserAccount(usr, false).Render(context.Background(), c.Writer)
+		return
+	} else {
+		u, _ := c.Get("user")
+		usr := u.(*types.User)
+		leaderboard, hasGamesPlayed, err := h.userStore.GetUserGameScore(usr.UserName)
+		if err != nil {
+			log.Println("error : ", err)
+			return
+		}
+		log.Println("hasGamesPlayed: ", hasGamesPlayed)
+		log.Println("leaderboard : ", leaderboard)
+		user.LoadUserLeaderBoardHistory(hasGamesPlayed, leaderboard).Render(context.Background(), c.Writer)
+
+	}
 }

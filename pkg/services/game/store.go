@@ -113,7 +113,7 @@ func (s *store) GetQuestionsByTopicName(TopicName string, userID string) ([]type
 			return nil, err
 		}
 	}
-
+	log.Println("TOPIC : ", t)
 	rows, err := s.sqlDB.Query("select id,type,image_link,question,correct_answer from questions where topic_id=?", t.TopicID)
 	if err != nil {
 		log.Println("error with questions")
@@ -143,6 +143,7 @@ func (s *store) GetQuestionsByTopicName(TopicName string, userID string) ([]type
 		}
 		questions = append(questions, q)
 	}
+	log.Println("questions to cache: ", questions)
 	err = s.CacheQuestions(userID, questions)
 	if err != nil {
 		return nil, err

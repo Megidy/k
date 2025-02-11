@@ -88,9 +88,9 @@ body {
 
 @keyframes fadeout {
     from {
-        opacity: 1; /* Початок з нульової прозорості */
+        opacity: 1; 
     }
     to {
-        opacity: 0; /* Кінцево повністю видимий */
+        opacity: 0; 
     }
 }

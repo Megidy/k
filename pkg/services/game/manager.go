@@ -7,7 +7,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Megidy/k/config"
 	"github.com/Megidy/k/types"
+	"github.com/Megidy/k/worker"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
@@ -32,6 +34,9 @@ type ownerStruct struct {
 // 2 if 0 connection and game is not started and noone connects for 120 seconds , than delete room ||DONE
 
 type Manager struct {
+	config     *config.Config
+	workerPool worker.WorkerManager
+
 	//owner
 	owner ownerStruct
 	//statement of game
@@ -112,17 +117,18 @@ type Manager struct {
 }
 
 // constructor
-func NewManager(owner, roomID string, playstyle, numberOfPlayers, amountOfQuestions int, questions []types.Question) *Manager {
+func NewManager(workerPool worker.WorkerManager, owner, roomID string, playstyle, numberOfPlayers, amountOfQuestions int, questions []types.Question) *Manager {
 	ctx, cancel := context.WithCancel(context.Background())
 	if amountOfQuestions > len(questions) {
 		amountOfQuestions = len(questions)
 	}
 	manager := &Manager{
+		workerPool:               workerPool,
 		owner:                    ownerStruct{username: owner, playStyle: playstyle},
 		roomID:                   roomID,
 		maxPlayers:               numberOfPlayers,
 		numberOfQuestions:        amountOfQuestions,
-		currTime:                 10,
+		currTime:                 20,
 		questions:                questions,
 		mu:                       sync.RWMutex{},
 		ctx:                      ctx,
@@ -501,6 +507,10 @@ func (m *Manager) Writer() {
 			if m.owner.playStyle == 2 && m.owner.client.isOnline {
 				m.owner.client.leaderBoardCh <- players
 			}
+			//creating task to start tracking leaderboard for adding to the account
+			task := worker.NewWorkerTask(m.currentQuestion.Topic.Name, players)
+			m.workerPool.StartTrackingGame(task)
+
 			//writing leaderboard to all connected players
 			m.mu.RLock()
 			for _, client := range m.clientsMap {
@@ -825,7 +835,7 @@ func (m *Manager) GameTimeHandler() {
 		ticker.Stop()
 		close(m.writeTimeCh)
 	}()
-	var count int = 10
+	var count int = 20
 	for {
 		select {
 		case <-m.ctx.Done():
@@ -835,7 +845,7 @@ func (m *Manager) GameTimeHandler() {
 			//checking if time is up
 			if count == 0 {
 				//updating counter
-				count = 10
+				count = 20
 				m.currTime = count
 
 				var tempWaitList []string
@@ -853,7 +863,7 @@ func (m *Manager) GameTimeHandler() {
 			}
 		case <-m.restartTimeCh:
 			ticker.Reset(time.Second * 1)
-			count = 10
+			count = 20
 			m.currTime = count
 			m.writeTimeCh <- true
 		}

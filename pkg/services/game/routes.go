@@ -15,6 +15,7 @@ import (
 	"github.com/Megidy/k/static/templates/room"
 	"github.com/Megidy/k/static/templates/topic"
 	"github.com/Megidy/k/types"
+	"github.com/Megidy/k/worker"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -24,12 +25,14 @@ import (
 type gameHandler struct {
 	clienSideHandler types.ClientSideHandler
 	gameStore        types.GameStore
+	WorkerPool       worker.WorkerManager
 }
 
-func NewGameHandler(clienSideHandler types.ClientSideHandler, gameStore types.GameStore) *gameHandler {
+func NewGameHandler(clienSideHandler types.ClientSideHandler, gameStore types.GameStore, WorkerPool worker.WorkerManager) *gameHandler {
 	return &gameHandler{
 		clienSideHandler: clienSideHandler,
 		gameStore:        gameStore,
+		WorkerPool:       WorkerPool,
 	}
 }
 
@@ -77,9 +80,9 @@ func (h *gameHandler) LoadInfoTempl(c *gin.Context) {
 	log.Println("topic avaible : ", topics)
 	comp := room.LoadInfoPage(topics, []types.Topic{
 		{
-			TopicID: "3",
-			UserID:  user.ID,
-			Name:    "ANOTHERONE",
+			TopicID: "geo_001",
+			UserID:  "public",
+			Name:    "Geography",
 		},
 	}, roomID, p, q, playstyle)
 	comp.Render(context.Background(), c.Writer)
@@ -117,15 +120,26 @@ func (h *gameHandler) ConfirmInfo(c *gin.Context) {
 	}
 	//find question with this topic
 	log.Println("topic : ", topic)
-	questions, err := h.gameStore.GetQuestionsByTopicName(topic, u.(*types.User).ID)
-	if err != nil {
-		log.Println("error when getting question from db by topic : ", err)
-		return
+	var questions []types.Question
+	if topic == "Geography" {
+		questions, err = h.gameStore.GetQuestionsByTopicName("Geography", "public")
+		if err != nil {
+			log.Println("error when getting question from db by topic : ", err)
+			return
+		}
+
+	} else {
+		questions, err = h.gameStore.GetQuestionsByTopicName(topic, u.(*types.User).ID)
+		if err != nil {
+			log.Println("error when getting question from db by topic : ", err)
+			return
+		}
 	}
 	log.Println("questions : ", questions)
-	globalRoomManager.CreateRoom(u.(*types.User).UserName, roomID, players, playstyle, numberOfQuestions, questions)
+	globalRoomManager.CreateRoom(h.WorkerPool, u.(*types.User).UserName, roomID, players, playstyle, numberOfQuestions, questions)
 	url := fmt.Sprintf("/game/%s", roomID)
 	c.Writer.Header().Add("HX-Redirect", url)
+
 }
 
 func (h *gameHandler) HandleGame(c *gin.Context) {

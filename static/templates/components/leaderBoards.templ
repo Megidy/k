@@ -8,7 +8,7 @@ templ LeaderBoard(players []types.Player) {
 		<ul>
 			for index,player:=range players {
 				if index < 5 {
-					<li>{ fmt.Sprintf("%d", index+1) } : username: { player.Username }, points of the { player.Username } are { fmt.Sprintf("%d", player.Score) }</li>
+					<li>{ fmt.Sprintf("%d", index+1) }: { player.Username }, points:{ fmt.Sprintf("%d", player.Score) }</li>
 				}
 			}
 		</ul>
@@ -20,7 +20,7 @@ templ SpectatorsLeaderBoard(players []types.Player) {
 		<ul>
 			for index,player:=range players {
 				if index < 5 {
-					<li>{ fmt.Sprintf("%d", index+1) } : username: { player.Username }, points of the { player.Username } are { fmt.Sprintf("%d", player.Score) }</li>
+					<li>{ fmt.Sprintf("%d", index+1) }: { player.Username }, points:{ fmt.Sprintf("%d", player.Score) }</li>
 				}
 			}
 		</ul>

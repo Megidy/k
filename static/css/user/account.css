@@ -82,7 +82,28 @@ body {
 .descriptionForm button:hover {
     background-color: #732d91;
 }
+#GetLeaderboardHistory {
+    margin-top: 15px;
+    background-color: #3498db;
+    color: #fff;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
 
+#GetLeaderboardHistory:hover {
+    background-color: #2980b9;
+    transform: scale(1.05);
+}
+
+#GetLeaderboardHistory:active {
+    background-color: #1f618d;
+    transform: scale(0.98);
+}
 .userDescription {
     margin-top: 10px;
     font-size: 1rem;
