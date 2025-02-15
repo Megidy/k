@@ -29,7 +29,7 @@ func NewStore(db *sql.DB, redisDB *redis.Client) *store {
 }
 
 func (s *store) GetUserById(id string) (*types.User, error) {
-	row, err := s.db.Query("select * from users where id=?", id)
+	row, err := s.db.Query("SELECT * FROM users WHERE id=?", id)
 	if err != nil {
 		return nil, err
 	}
@@ -45,14 +45,14 @@ func (s *store) GetUserById(id string) (*types.User, error) {
 func (s *store) CreateUser(user *types.User) error {
 	user.ProfilePicture = pictures[rand.Intn(5)]
 
-	_, err := s.db.Exec("insert into users(id,username,email,password,profile_picture) values(?,?,?,?,?)", user.ID, user.UserName, user.Email, user.Password, user.ProfilePicture)
+	_, err := s.db.Exec("INSERT INTO users(id,username,email,password,profile_picture) VALUES(?,?,?,?,?)", user.ID, user.UserName, user.Email, user.Password, user.ProfilePicture)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 func (s *store) UserExists(user *types.User) (bool, error) {
-	rows, err := s.db.Query("select * from users where email=? or username=?", user.Email, user.UserName)
+	rows, err := s.db.Query("SELECT * FROM users WHERE email=? OR username=?", user.Email, user.UserName)
 	if err != nil {
 		return false, err
 	}
@@ -63,7 +63,7 @@ func (s *store) UserExists(user *types.User) (bool, error) {
 }
 
 func (s *store) GetUserByEmail(email string) (*types.User, error) {
-	rows, err := s.db.Query("select * from users where email=?", email)
+	rows, err := s.db.Query("SELECT * FROM users WHERE email=?", email)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (s *store) GetUserByEmail(email string) (*types.User, error) {
 }
 
 func (s *store) UpdateDescription(userID, description string) error {
-	_, err := s.db.Exec("update users set description=? where id=?", description, userID)
+	_, err := s.db.Exec("UPDATE users SET description=? WHERE id=?", description, userID)
 
 	if err != nil {
 		return err

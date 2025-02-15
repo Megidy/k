@@ -16,10 +16,6 @@ type store struct {
 	redisDB *redis.Client
 }
 
-// TO DO
-// remake question storage to mongoDB
-// this should be perfect ngl
-
 func NewGameStore(sqlDB *sql.DB, redisDB *redis.Client) *store {
 	return &store{sqlDB: sqlDB, redisDB: redisDB}
 }
