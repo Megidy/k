@@ -26,7 +26,7 @@ func NewGameStore(sqlDB *sql.DB, redisDB *redis.Client) *store {
 
 func (s *store) CreateTopic(questions []types.Question, userID string) error {
 	topic := questions[0].Topic
-	_, err := s.sqlDB.Exec("insert into topics values(?,?,?)", topic.TopicID, userID, topic.Name)
+	_, err := s.sqlDB.Exec("INSERT INTO topics VALUES(?,?,?)", topic.TopicID, userID, topic.Name)
 	if err != nil {
 		log.Println("error occured in topics : ", err)
 		return err
@@ -34,13 +34,13 @@ func (s *store) CreateTopic(questions []types.Question, userID string) error {
 	}
 	for _, question := range questions {
 
-		_, err = s.sqlDB.Exec("insert into questions values(?,?,?,?,?,?)", question.Id, question.Topic.TopicID, question.Type, question.ImageLink, question.Question, question.CorrectAnswer)
+		_, err = s.sqlDB.Exec("INSERT INTO questions VALUES(?,?,?,?,?,?)", question.Id, question.Topic.TopicID, question.Type, question.ImageLink, question.Question, question.CorrectAnswer)
 		if err != nil {
 			log.Println("error occured in questions : ", err)
 			return err
 		}
 		for _, answer := range question.Answers {
-			_, err = s.sqlDB.Exec("insert into answers values(?,?)", question.Id, answer)
+			_, err = s.sqlDB.Exec("INSERT INTO answers VALUES(?,?)", question.Id, answer)
 			if err != nil {
 				log.Println("error occured in answers : ", err)
 				return err
@@ -72,7 +72,7 @@ func (s *store) GetUsersTopics(userID string) ([]types.Topic, error) {
 		return topics, nil
 	}
 
-	rows, err := s.sqlDB.Query("select * from topics where user_id=?", userID)
+	rows, err := s.sqlDB.Query("SELECT * FROM topics WHERE user_id=?", userID)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (s *store) GetQuestionsByTopicName(TopicName string, userID string) ([]type
 	if hasCache {
 		return questions, nil
 	}
-	row, err := s.sqlDB.Query("select * from topics where name=? and user_id=?", TopicName, userID)
+	row, err := s.sqlDB.Query("SELECT * FROM topics WHERE name=? AND user_id=?", TopicName, userID)
 	if err != nil {
 		log.Println("error with topics")
 		return nil, err
@@ -114,7 +114,7 @@ func (s *store) GetQuestionsByTopicName(TopicName string, userID string) ([]type
 		}
 	}
 	log.Println("TOPIC : ", t)
-	rows, err := s.sqlDB.Query("select id,type,image_link,question,correct_answer from questions where topic_id=?", t.TopicID)
+	rows, err := s.sqlDB.Query("SELECT id,type,image_link,question,correct_answer FROM questions WHERE topic_id=?", t.TopicID)
 	if err != nil {
 		log.Println("error with questions")
 		return nil, err
@@ -127,7 +127,7 @@ func (s *store) GetQuestionsByTopicName(TopicName string, userID string) ([]type
 		if err != nil {
 			return nil, err
 		}
-		rows, err := s.sqlDB.Query("select answer from answers where question_id=?", q.Id)
+		rows, err := s.sqlDB.Query("SELECT answer FROM answers WHERE question_id=?", q.Id)
 		if err != nil {
 			log.Println("error with answers ")
 			return nil, err
@@ -152,7 +152,7 @@ func (s *store) GetQuestionsByTopicName(TopicName string, userID string) ([]type
 }
 
 func (s *store) TopicNameAlreadyExists(userID string, topicName string) (bool, error) {
-	rows, err := s.sqlDB.Query("select 1 from topics where user_id=? and name=?", userID, topicName)
+	rows, err := s.sqlDB.Query("SELECT 1 FROM topics WHERE user_id=? AND name=?", userID, topicName)
 	if err != nil {
 		return false, err
 	}
