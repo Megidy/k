@@ -3,6 +3,6 @@ start:
 build:
 	@docker compose up --build
 down:
-	@docmer compose down
+	@docker compose down
 clear-volumes:
 	@docker-compose down --volumes --remove-orphans
