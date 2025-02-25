@@ -1,9 +1,10 @@
-package game
+package manager
 
 import (
 	"log"
 	"sync"
 
+	"github.com/Megidy/k/config"
 	"github.com/Megidy/k/types"
 	"github.com/Megidy/k/worker"
 )
@@ -15,14 +16,15 @@ type RoomManager struct {
 	listOfPlayers map[*Manager][]string
 }
 
-var globalRoomManager = &RoomManager{
+var GlobalRoomManager = &RoomManager{
 	rooms:         make(map[string]*Manager),
 	listOfPlayers: make(map[*Manager][]string),
 }
 
-func (rm *RoomManager) CreateRoom(workerPool worker.WorkerManager, owner, roomID string, numberOfPlayers, playstyleOfOwner, amountOfQuestions int, questions []types.Question) {
+func (rm *RoomManager) CreateRoom(cfg *config.Config, workerPool worker.WorkerManager, Owner, roomID string, numberOfPlayers, playstyleOfOwner, amountOfQuestions int, questions []types.Question) {
 
-	manager := NewManager(workerPool, owner, roomID, playstyleOfOwner, numberOfPlayers, amountOfQuestions, questions)
+	manager := NewManager(cfg, workerPool, Owner, roomID, playstyleOfOwner, numberOfPlayers, amountOfQuestions, questions)
+	manager.Run()
 	rm.mu.Lock()
 	rm.rooms[roomID] = manager
 	rm.mu.Unlock()
