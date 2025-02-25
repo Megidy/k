@@ -10,7 +10,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Megidy/k/config"
 	"github.com/Megidy/k/pkg/auth"
+	"github.com/Megidy/k/pkg/services/game/manager"
 	"github.com/Megidy/k/static/templates/game"
 	"github.com/Megidy/k/static/templates/room"
 	"github.com/Megidy/k/static/templates/topic"
@@ -23,13 +25,15 @@ import (
 //TO DO: Create oportunity to check question of existing topics
 
 type gameHandler struct {
+	config           *config.Config
 	clienSideHandler types.ClientSideHandler
 	gameStore        types.GameStore
 	WorkerPool       worker.WorkerManager
 }
 
-func NewGameHandler(clienSideHandler types.ClientSideHandler, gameStore types.GameStore, WorkerPool worker.WorkerManager) *gameHandler {
+func NewGameHandler(cfg *config.Config, clienSideHandler types.ClientSideHandler, gameStore types.GameStore, WorkerPool worker.WorkerManager) *gameHandler {
 	return &gameHandler{
+		config:           cfg,
 		clienSideHandler: clienSideHandler,
 		gameStore:        gameStore,
 		WorkerPool:       WorkerPool,
@@ -93,7 +97,7 @@ func (h *gameHandler) ConfirmInfo(c *gin.Context) {
 
 	topic := h.clienSideHandler.GetDataFromForm(c, "topic")
 	roomID := c.Param("roomID")
-	_, ok := globalRoomManager.GetManager(roomID)
+	_, ok := manager.GlobalRoomManager.GetManager(roomID)
 	if ok {
 		b := make([]byte, 6)
 		rand.Read(b)
@@ -136,7 +140,7 @@ func (h *gameHandler) ConfirmInfo(c *gin.Context) {
 		}
 	}
 	log.Println("questions : ", questions)
-	globalRoomManager.CreateRoom(h.WorkerPool, u.(*types.User).UserName, roomID, players, playstyle, numberOfQuestions, questions)
+	manager.GlobalRoomManager.CreateRoom(h.config, h.WorkerPool, u.(*types.User).UserName, roomID, players, playstyle, numberOfQuestions, questions)
 	url := fmt.Sprintf("/game/%s", roomID)
 	c.Writer.Header().Add("HX-Redirect", url)
 
@@ -146,18 +150,18 @@ func (h *gameHandler) HandleGame(c *gin.Context) {
 	u, _ := c.Get("user")
 	user := u.(*types.User)
 	roomID := c.Param("roomID")
-	m, ok := globalRoomManager.GetManager(roomID)
+	m, ok := manager.GlobalRoomManager.GetManager(roomID)
 	if !ok {
 		game.Game(roomID, true, false, false, false).Render(c.Request.Context(), c.Writer)
 		return
 	}
-	isDuplicate := globalRoomManager.CheckDuplicate(m, user.UserName)
+	isDuplicate := manager.GlobalRoomManager.CheckDuplicate(m, user.UserName)
 	if isDuplicate {
 		game.Game(roomID, true, true, false, false).Render(c.Request.Context(), c.Writer)
 		return
 	} else {
-		if m.owner.username == user.UserName {
-			if m.owner.playStyle == 2 {
+		if m.Owner.Username == user.UserName {
+			if m.Owner.PlayStyle == 2 {
 				log.Println("spectating")
 				game.Game(roomID, false, true, true, true).Render(c.Request.Context(), c.Writer)
 			} else {
@@ -175,7 +179,7 @@ func (h *gameHandler) HandleWSConnectionForGame(c *gin.Context) {
 	roomID := c.Param("roomID")
 	log.Println("room id : ", roomID)
 
-	manager, exists := globalRoomManager.GetManager(roomID)
+	manager, exists := manager.GlobalRoomManager.GetManager(roomID)
 	if !exists {
 		return
 	}
@@ -194,7 +198,7 @@ func (h *gameHandler) ConfirmConnectionToRoom(c *gin.Context) {
 	//get data from form
 	roomID := h.clienSideHandler.GetDataFromForm(c, "code")
 
-	_, ok := globalRoomManager.GetManager(roomID)
+	_, ok := manager.GlobalRoomManager.GetManager(roomID)
 	if !ok {
 		log.Println("room not found")
 		room.LoadConnectionToRoom("room not found :(").Render(c.Request.Context(), c.Writer)

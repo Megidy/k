@@ -3,6 +3,7 @@ package api
 import (
 	"database/sql"
 
+	"github.com/Megidy/k/config"
 	"github.com/Megidy/k/pkg/auth"
 	"github.com/Megidy/k/pkg/services/game"
 	"github.com/Megidy/k/pkg/services/user"
@@ -13,13 +14,15 @@ import (
 )
 
 type Server struct {
+	config  *config.Config
 	addr    string
 	sqlDB   *sql.DB
 	redisDB *redis.Client
 }
 
-func NewServer(addr string, sqlDB *sql.DB, redisDB *redis.Client) *Server {
+func NewServer(cfg *config.Config, addr string, sqlDB *sql.DB, redisDB *redis.Client) *Server {
 	return &Server{
+		config:  cfg,
 		addr:    addr,
 		sqlDB:   sqlDB,
 		redisDB: redisDB,
@@ -49,7 +52,7 @@ func (s *Server) Run() error {
 	userHandler.RegisterRoutes(router, authHandler)
 
 	//gameHandler
-	gameHandler := game.NewGameHandler(clientSideHandler, gameStore, workerPool)
+	gameHandler := game.NewGameHandler(s.config, clientSideHandler, gameStore, workerPool)
 	gameHandler.RegisterRoutes(router, authHandler)
 
 	return router.Run(s.addr)
