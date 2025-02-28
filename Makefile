@@ -6,3 +6,5 @@ down:
 	@docker compose down
 clear-volumes:
 	@docker-compose down --volumes --remove-orphans
+gen:
+	@templ generate

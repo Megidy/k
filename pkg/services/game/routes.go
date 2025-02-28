@@ -43,13 +43,13 @@ func NewGameHandler(cfg *config.Config, clienSideHandler types.ClientSideHandler
 func (h *gameHandler) RegisterRoutes(router gin.IRouter, authHandler *auth.Handler) {
 	//game Handlers:
 	//1 : handle template for game
-	router.GET("/game/:roomID", authHandler.WithJWT, h.HandleGame)
+	router.GET("/room/:roomID", authHandler.WithJWT, h.HandleGame)
 	//handler information about room , will add questions
-	router.GET("/game/:roomID/info/:players/:questions/:playstyle", authHandler.WithJWT, h.LoadInfoTempl)
+	router.GET("/room/:roomID/info/:players/:questions/:playstyle", authHandler.WithJWT, h.LoadInfoTempl)
 	//confirm information about room ,redirect to the game handler : /game/:roomID
-	router.POST("/game/:roomID/info/:players/:questions/:playstyle/confirm", authHandler.WithJWT, h.ConfirmInfo)
+	router.POST("/room/:roomID/info/:players/:questions/:playstyle/confirm", authHandler.WithJWT, h.ConfirmInfo)
 	//2 : handle ws connection for game
-	router.GET("/ws/game/handler/:roomID", authHandler.WithJWT, h.HandleWSConnectionForGame)
+	router.GET("/ws/room/handler/:roomID", authHandler.WithJWT, h.HandleWSConnectionForGame)
 
 	//connection to room
 	router.GET("/room/connect", authHandler.WithJWT, h.LoadTemplConnectToRoom)
@@ -141,7 +141,7 @@ func (h *gameHandler) ConfirmInfo(c *gin.Context) {
 	}
 	log.Println("questions : ", questions)
 	manager.GlobalRoomManager.CreateRoom(h.config, h.WorkerPool, u.(*types.User).UserName, roomID, players, playstyle, numberOfQuestions, questions)
-	url := fmt.Sprintf("/game/%s", roomID)
+	url := fmt.Sprintf("/room/%s", roomID)
 	c.Writer.Header().Add("HX-Redirect", url)
 
 }
@@ -205,7 +205,7 @@ func (h *gameHandler) ConfirmConnectionToRoom(c *gin.Context) {
 		return
 	}
 
-	url := fmt.Sprintf("/game/%s", roomID)
+	url := fmt.Sprintf("/room/%s", roomID)
 	c.Writer.Header().Add("HX-Redirect", url)
 }
 
@@ -235,7 +235,7 @@ func (h *gameHandler) ConfirmCreationOfRoom(c *gin.Context) {
 	roomID = strings.ReplaceAll(roomID, "/", "d")
 	//create cookie for connection secure
 
-	url := fmt.Sprintf("/game/%s/info/%s/%s/%d", roomID, numberOfPlayers, amountOfQuestions, playstyle)
+	url := fmt.Sprintf("/room/%s/info/%s/%s/%d", roomID, numberOfPlayers, amountOfQuestions, playstyle)
 	c.Writer.Header().Add("HX-Redirect", url)
 }
 

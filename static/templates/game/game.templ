@@ -8,7 +8,7 @@ import (
 // import "github.com/Megidy/k/static/components"
 templ Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSpectator bool) {
 	<head>
-		<title>Game</title>
+		<title>Room</title>
 		<script src="https://unpkg.com/htmx.org@1.9.8"></script>
 		<script src="https://unpkg.com/htmx.org/dist/ext/multi-swap.js"></script>
 		<script src="https://unpkg.com/htmx.org/dist/ext/ws.js"></script>
@@ -22,12 +22,12 @@ templ Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isS
 		@components.TopNavBar()
 		<div class="gameWrapper">
 			if !isFound {
-				<div>game in which you are trying to connect was finished or doesnt exists :((</div>
+				<div>room in which you are trying to connect was finished or doesnt exists :((</div>
 			} else {
 				if isOwner {
 					if isSpectator {
-						<div class="gameClass" hx-ext="ws" ws-connect={ fmt.Sprintf("/ws/game/handler/%s", roomID) } ws-reconnect-delay="10000">
-							<div><h4>Game ID : { roomID }</h4></div>
+						<div class="gameClass" hx-ext="ws" ws-connect={ fmt.Sprintf("/ws/room/handler/%s", roomID) } ws-reconnect-delay="10000">
+							<div><h4>Room ID : { roomID }</h4></div>
 							<div id="leaderboard">
 								<div id="time">
 									<div id="spectator">
@@ -43,9 +43,9 @@ templ Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isS
 						</div>
 					} else {
 						if isAlreadyPlaying {
-							<div>If you are trying to reconect with page reloading , try one more time , if it didnt help ,that means than you have already opened page with this game! </div>
+							<div>If you are trying to reconect with page reloading , try one more time , if it didnt help ,that means than you have already opened page with this room! </div>
 						} else {
-							<div class="gameClass" hx-ext="ws" ws-connect={ fmt.Sprintf("/ws/game/handler/%s", roomID) } ws-reconnect-delay="10000">
+							<div class="gameClass" hx-ext="ws" ws-connect={ fmt.Sprintf("/ws/room/handler/%s", roomID) } ws-reconnect-delay="10000">
 								<div><h4>Game ID : { roomID }</h4></div>
 								<div id="leaderboard">
 									<div id="time"></div>
@@ -60,9 +60,9 @@ templ Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isS
 					}
 				} else {
 					if isAlreadyPlaying {
-						<div>If you are trying to reconect with page reloading , try one more time , if it didnt help ,that means than you have already opened page with this game! </div>
+						<div>If you are trying to reconect with page reloading , try one more time , if it didnt help ,that means than you have already opened page with this room! </div>
 					} else {
-						<div class="gameClass" hx-ext="ws" ws-connect={ fmt.Sprintf("/ws/game/handler/%s", roomID) } ws-reconnect-delay="10000">
+						<div class="gameClass" hx-ext="ws" ws-connect={ fmt.Sprintf("/ws/room/handler/%s", roomID) } ws-reconnect-delay="10000">
 							<div><h4>Game ID : { roomID }</h4></div>
 							<div id="leaderboard">
 								<div id="time"></div>
