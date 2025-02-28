@@ -68,7 +68,7 @@ Follow these instructions to set up and run the Test Platform locally.
 
 Open your browser and go to:
 
-👉``` http://localhost:8080/account/login```
+👉```/account/login```
 
 🤝 Contributing
 
