@@ -27,8 +27,8 @@ type Config struct {
 
 	// Redis configuration
 	RedisConnectionString         string `env:"REDIS_CONNECTION_STRING" envDefault:"redis:6379"`
-	RedisTopicCacheDuration       int    `env:"REDIS_TOPIC_CACHE_DURATION" envDefault:"48"`
-	RedisLeaderboardCacheDuration int    `env:"REDIS_LEADERBOARD_CACHE_DURATION" envDefault:"48"`
+	RedisTopicCacheDuration       int    `env:"REDIS_TOPIC_CACHE_DURATION" envDefault:"600"`
+	RedisLeaderboardCacheDuration int    `env:"REDIS_LEADERBOARD_CACHE_DURATION" envDefault:"60000"`
 }
 
 func NewConfig() *Config {
