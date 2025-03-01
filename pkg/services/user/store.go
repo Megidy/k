@@ -110,7 +110,7 @@ func (s *store) CacheUserGameScore(username, score, place, topicName string) err
 		return err
 	}
 
-	return s.redisDB.Set(ctx, cacheKey, jsonData, time.Second*60).Err()
+	return s.redisDB.Set(ctx, cacheKey, jsonData, time.Second).Err()
 }
 
 func (s *store) GetUserGameScore(username string) ([]types.UserLeaderBoard, bool, error) {

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/Megidy/k/pkg/auth"
+	"github.com/Megidy/k/static/templates/overall"
 	"github.com/Megidy/k/static/templates/user"
 	"github.com/Megidy/k/types"
 	"github.com/gin-gonic/gin"
@@ -41,6 +42,13 @@ func (h *userHandler) RegisterRoutes(router gin.IRouter, authHandler *auth.Handl
 	router.POST("/redirect-to-leaderboard-history", authHandler.WithJWT, h.RedirectToLeaderBoardHistory)
 
 	router.POST("/account/info/description/confirm", authHandler.WithJWT, h.ConfirmDescriptionCreation)
+
+	router.GET("/home", h.LoadHome)
+	router.GET("/", h.LoadHome)
+}
+
+func (h *userHandler) LoadHome(c *gin.Context) {
+	overall.Home().Render(c.Request.Context(), c.Writer)
 }
 func (h *userHandler) LoadCreateAccountTempl(c *gin.Context) {
 	user.Signup("").Render(c.Request.Context(), c.Writer)
@@ -59,7 +67,7 @@ func (h *userHandler) ConfirmCreateAccount(c *gin.Context) {
 	}
 	if exists {
 		log.Println("user already exists")
-		user.Signup("user exists , sorry ;(((").Render(c.Request.Context(), c.Writer)
+		user.Signup("Такий користувач вже інсує").Render(c.Request.Context(), c.Writer)
 		return
 	}
 	u.ID = uuid.NewString()
@@ -102,7 +110,7 @@ func (h *userHandler) ConfirmLoginAccount(c *gin.Context) {
 		return
 	}
 	if !exists {
-		user.Login("data is invalid, please try again").Render(c.Request.Context(), c.Writer)
+		user.Login("Дані не є валідними, будь ласка попробуйте ще раз").Render(c.Request.Context(), c.Writer)
 		log.Println("user with this written data doesn't exsit")
 		return
 	}
@@ -114,7 +122,7 @@ func (h *userHandler) ConfirmLoginAccount(c *gin.Context) {
 	}
 	err = auth.CheckPasswordCorrectness(usr.Password, nativePassword)
 	if err != nil {
-		user.Login("data is invalid, please try again").Render(c.Request.Context(), c.Writer)
+		user.Login("Дані не є валідними, будь ласка попробуйте ще раз").Render(c.Request.Context(), c.Writer)
 		log.Println("error when comparing native and hashed passwords : ", err)
 		return
 	}
