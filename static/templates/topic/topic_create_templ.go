@@ -39,7 +39,7 @@ func LoadCreateTopic(message string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"topicSwapp\"><div class=\"topic\"><form hx-post=\"/topic/create/confirm\" hx-swap=\"outerHTML\" hx-target=\".topicSwapp\"><div class=\"form-group\"><label for=\"name\">Назва теми: </label> <input type=\"text\" id=\"name\" name=\"name\" placeholder=\"name\" required></div><div class=\"form-group\"><label for=\"number\">кількість питань: </label> <input type=\"number\" id=\"number\" name=\"number\" placeholder=\"5-20\" min=\"5\" max=\"20\" required></div><button type=\"submit\" class=\"btn\">Підтвердити</button></form><div class=\"message\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"topicSwapp\"><div class=\"topic\"><form hx-post=\"/topic/create/confirm\" hx-swap=\"outerHTML\" hx-target=\".topicSwapp\"><div class=\"form-group\"><label for=\"name\">Назва теми: </label> <input type=\"text\" id=\"name\" name=\"name\" placeholder=\"name\" required></div><div class=\"form-group\"><label for=\"number\">Кількість питань: </label> <input type=\"number\" id=\"number\" name=\"number\" placeholder=\"5-20\" min=\"5\" max=\"20\" required></div><button type=\"submit\" class=\"btn\">Підтвердити</button></form><div class=\"message\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -83,7 +83,7 @@ func LoadUserAccount(user *types.User, isOwner bool) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if isOwner {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<button type=\"submit\" id=\"GetLeaderboardHistory\" class=\"btn\" hx-post=\"/redirect-to-leaderboard-history\">Leaderboard History</button><div id=\"descriptionLabel\" class=\"descriptionLabel\">Ваш Опис:</div><form id=\"descriptionForm\" class=\"descriptionForm\" hx-post=\"/account/info/description/confirm\" hx-swap=\"outerHTML\"><textarea id=\"descriptionInput\" class=\"descriptionInput\" rows=\"4\" cols=\"40\" name=\"description\" maxlength=\"200\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<button type=\"submit\" id=\"GetLeaderboardHistory\" class=\"btn\" hx-post=\"/redirect-to-leaderboard-history\">Історія таблиці лідерів</button><div id=\"descriptionLabel\" class=\"descriptionLabel\">Ваш Опис:</div><form id=\"descriptionForm\" class=\"descriptionForm\" hx-post=\"/account/info/description/confirm\" hx-swap=\"outerHTML\"><textarea id=\"descriptionInput\" class=\"descriptionInput\" rows=\"4\" cols=\"40\" name=\"description\" maxlength=\"200\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
