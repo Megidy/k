@@ -12,7 +12,7 @@ templ Question(question types.Question) {
 	<div class="quiz-container" hx-swap-oob="innerHTML:#game">
 		<p class="quiz-question"><h4>{ question.Question }</h4></p>
 		if question.Type == "image" {
-			<img class="quiz-image" src={ question.ImageLink } alt="no image found :("/>
+			<img class="quiz-image" src={ question.ImageLink } alt="не найшлось картинки :("/> 
 		}
 		<form class="quiz-form" id="sendingQuestionForm" ws-send>
 			for index, answer := range question.Answers {
@@ -32,38 +32,38 @@ templ SpectatorQuestion(question types.Question) {
 		if question.Type=="image" {
 			<img src={ question.ImageLink }/>
 		}
-		<p>Answers : </p>
+		<p>Варіанти відповіді : </p>
 		<ul>
 			for _ ,answer :=range question.Answers {
 				<li>{ answer }</li>
 			}
 		</ul>
-		<p>Right answer is : { question.CorrectAnswer }</p>
+		<p>Правильна відповідь: { question.CorrectAnswer }</p>
 	</div>
 }
 
 templ CreateQuestion(number int) {
 	<div id={ fmt.Sprintf("question-%d", number) }>
 		<div>
-			<label for={ fmt.Sprintf("%d", number) }>Question  { fmt.Sprintf("%d",number+1) }:</label>
-			<input type="text" id={ fmt.Sprintf("name-%d", number) } name={ fmt.Sprintf("name-%d", number) } maxlength="200" placeholder="Your question here" required/>
+			<label for={ fmt.Sprintf("%d", number) }>Питання  { fmt.Sprintf("%d",number+1) }:</label>
+			<input type="text" id={ fmt.Sprintf("name-%d", number) } name={ fmt.Sprintf("name-%d", number) } maxlength="200" placeholder="Введіть ваше питання" required/>
 			<br/>
 		</div>
 		<div>
-			<label>Answers:</label>
+			<label>Варіанти відповідей :</label>
 			<br/>
-			1 answer <input type="text" id={ fmt.Sprintf("a-1-%d", number) } name={ fmt.Sprintf("a-1-%d", number) } maxlength="200" placeholder="answer 1" required/>
-			2 answer :<input type="text" id={ fmt.Sprintf("a-2-%d", number) } name={ fmt.Sprintf("a-2-%d", number) } maxlength="200" placeholder="answer 2" required/>
-			3 answer :<input type="text" id={ fmt.Sprintf("a-3-%d", number) } name={ fmt.Sprintf("a-3-%d", number) } maxlength="200" placeholder="answer 3" required/>
-			4 answer :<input type="text" id={ fmt.Sprintf("a-4-%d", number) } name={ fmt.Sprintf("a-4-%d", number) } placeholder="answer 4" maxlength="200" required/>
+			1 відповідь <input type="text" id={ fmt.Sprintf("a-1-%d", number) } name={ fmt.Sprintf("a-1-%d", number) } maxlength="200" placeholder="відповідь 1" required/>
+			2 відповідь :<input type="text" id={ fmt.Sprintf("a-2-%d", number) } name={ fmt.Sprintf("a-2-%d", number) } maxlength="200" placeholder="відповідь 2" required/>
+			3 відповідь :<input type="text" id={ fmt.Sprintf("a-3-%d", number) } name={ fmt.Sprintf("a-3-%d", number) } maxlength="200" placeholder="відповідь 3" required/>
+			4 відповідь :<input type="text" id={ fmt.Sprintf("a-4-%d", number) } name={ fmt.Sprintf("a-4-%d", number) } placeholder="відповідь 4" maxlength="200" required/>
 			<br/>
 		</div>
 		<div>
-			<label>Correct Answer is :</label>
+			<label>Норме правильної відповіді:</label>
 			<input type="number" id={ fmt.Sprintf("correctA-%d", number) } name={ fmt.Sprintf("correctA-%d", number) } min="1" max="4" placeholder="" required/>
 		</div>
 		<div>
-			<label>Image (not necessary , only link)</label>
+			<label>Картинка (не обов'язково, тільки посилання)</label>
 			<input type="text" id={ fmt.Sprintf("image-%d", number) } name={ fmt.Sprintf("image-%d", number) }/>
 		</div>
 		<br>

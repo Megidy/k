@@ -18,19 +18,19 @@ templ LoadInfoPage(userTopics []types.Topic, defaultTopics []types.Topic, roomID
 	@components.TopNavBar()
 		<div class="topic-selection-container">
 			<form id="topicForm" hx-post={ fmt.Sprintf("/room/%s/info/%s/%s/%s/confirm", roomID, players, questions, playstyle) }>
-				<p>YourTopics: </p>
+				<p>Ваші теми: </p>
 				<div class="topic-section">
 					for _,userTopic:=range userTopics {
 						@components.Topics(userTopic)
 					}
 				</div>
-				<p>DefaultTopics:</p>
+				<p>Стандартні теми:</p>
 				<div class="topic-section">
 						for _,defaultTopic:=range defaultTopics {
 							@components.Topics(defaultTopic)
 						}
 				</div>
-				<button type="submit" class="confirm-btn">Confirm</button>
+				<button type="submit" class="confirm-btn">Підтвердити</button>
 			</form>
 		</div>
 	</body>

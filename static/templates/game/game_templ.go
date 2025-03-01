@@ -48,7 +48,7 @@ func Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSp
 			return templ_7745c5c3_Err
 		}
 		if !isFound {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div>room in which you are trying to connect was finished or doesnt exists :((</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div>Кімната до якої ви намагаєтесь приєднатись , завершила своє існування або її початково не існувало:((</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -81,13 +81,13 @@ func Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSp
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</h4></div><div id=\"leaderboard\"><div id=\"time\"><div id=\"spectator\"><p>You are spectating , so you can't play , just watch the current results </p><button type=\"submit\" id=\"beforeGameForceStart\" ws-send>force start</button><div id=\"beforeGameWait\"></div></div></div><div id=\"innerLeaderboard\"></div><div id=\"currQuestion\"></div><div id=\"currNotReadyPlayers\"></div></div></div>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</h4></div><div id=\"leaderboard\"><div id=\"time\"><div id=\"spectator\"><p>Ви спостерігаєте, тож ви не можете відповідати , спостерігайте за поточними результатами</p><button type=\"submit\" id=\"beforeGameForceStart\" ws-send>примусовий початок</button><div id=\"beforeGameWait\"></div></div></div><div id=\"innerLeaderboard\"></div><div id=\"currQuestion\"></div><div id=\"currNotReadyPlayers\"></div></div></div>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				} else {
 					if isAlreadyPlaying {
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div>If you are trying to reconect with page reloading , try one more time , if it didnt help ,that means than you have already opened page with this room! </div>")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div>Якщо ви намагаєтесь перезайти , будь ласка перезагрузіть сторінку ще раз, якщо ж це не допомогло,це означає , що ви вже маєте відкриту вкладу з цією кімнатою</div>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
@@ -105,7 +105,7 @@ func Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSp
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" ws-reconnect-delay=\"10000\"><div><h4>Game ID : ")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" ws-reconnect-delay=\"10000\"><div><h4>Room ID : ")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
@@ -118,7 +118,7 @@ func Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSp
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</h4></div><div id=\"leaderboard\"><div id=\"time\"></div><div id=\"game\"><p>Waiting for other players to connect </p><button type=\"submit\" ws-send>force start</button><div id=\"beforeGameWait\"></div></div></div></div>")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</h4></div><div id=\"leaderboard\"><div id=\"time\"></div><div id=\"game\"><p>Почекайте на інших користувачів</p><button type=\"submit\" ws-send>примусовий початок</button><div id=\"beforeGameWait\"></div></div></div></div>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
@@ -126,7 +126,7 @@ func Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSp
 				}
 			} else {
 				if isAlreadyPlaying {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<div>If you are trying to reconect with page reloading , try one more time , if it didnt help ,that means than you have already opened page with this room! </div>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<div>Якщо ви намагаєтесь перезайти , будь ласка перезагрузіть сторінку ще раз, якщо ж це не допомогло,це означає , що ви вже маєте відкриту вкладу з цією кімнатою</div>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -144,7 +144,7 @@ func Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSp
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\" ws-reconnect-delay=\"10000\"><div><h4>Game ID : ")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\" ws-reconnect-delay=\"10000\"><div><h4>Room ID : ")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -157,7 +157,7 @@ func Game(roomID string, isAlreadyPlaying bool, isFound bool, isOwner bool, isSp
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</h4></div><div id=\"leaderboard\"><div id=\"time\"></div><div id=\"game\"><p>Waiting for other players to connect </p><div id=\"beforeGameWait\"></div></div></div></div>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</h4></div><div id=\"leaderboard\"><div id=\"time\"></div><div id=\"game\"><p>Почекайте на інших користувачів</p><div id=\"beforeGameWait\"></div></div></div></div>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}

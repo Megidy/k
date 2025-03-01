@@ -47,9 +47,7 @@ body {
 .topic-section {
   
     max-height: 400px;
-    /* Set a max height for the container */
     overflow-y: auto;
-    /* Enable vertical scrolling */
     margin-bottom: 20px;
 }
 

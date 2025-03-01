@@ -16,10 +16,10 @@ templ LoadConnectionToRoom(message string) {
 			<div class="ConnectToRoom">
 				<form hx-post="/room/connect/confirm" hx-swap="outerHTML" hx-target=".swapConnectionRoom">
 					<div class="form-group">
-						<label for="code">code of room: </label>
-						<input type="text" id="code" name="code" placeholder="for example : WTd159Rq "required/>
+						<label for="code">Код кімнати: </label>
+						<input type="text" id="code" name="code" placeholder="для прикладу: WTd159Rq "required/>
 					</div>
-					<button type="submit" class="btn">Confirm</button>
+					<button type="submit" class="btn">Підтвердити</button>
 				</form>
 			</div>
 			<div class="message">

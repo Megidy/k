@@ -1,6 +1,6 @@
 .site-footer {
-    background-color: #2c3e50; /* Темний фон */
-    color: #ecf0f1; /* Світлий текст */
+    background-color: #2c3e50;
+    color: #ecf0f1;
     text-align: center;
     padding: 10px 0;
     position: fixed;
@@ -11,7 +11,7 @@
 }
 
 .site-footer a {
-    color: #1abc9c; /* Яскравий колір для посилань */
+    color: #1abc9c;
     text-decoration: none;
     margin-left: 5px;
 }

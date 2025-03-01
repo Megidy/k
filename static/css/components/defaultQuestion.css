@@ -5,10 +5,9 @@ body {
   font-family: Arial, sans-serif;
   background: linear-gradient(135deg, #71b7e6, #9b59b6);
   background-attachment: fixed;
-  /* Закріплення градієнта */
-  padding-top: 60px; 
+  padding-top: 60px;
   min-height: 100vh;
-  /* Мінімальна висота тіла сторінки */
+
   display: flex;
   flex-direction: column;
   background: linear-gradient(135deg, #71b7e6, #9b59b6);
@@ -18,20 +17,20 @@ body {
 .quiz-container {
   display: block;
   position: relative;
-  margin: 20px auto; /* Зменшення зовнішніх відступів */
-  width: 350px; /* Зменшення ширини контейнера */
-  padding: 15px; /* Менші внутрішні відступи */
+  margin: 20px auto;
+  width: 350px;
+  padding: 15px;
   background: #ffffff;
   border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Трохи менший ефект тіні */
-  overflow: hidden; /* Запобігання виходу вмісту за межі контейнера */
- }
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
 
 .quiz-question {
   color: #333333;
   font-size: 1.2em;
   text-align: center;
-  margin-bottom: 15px; 
+  margin-bottom: 15px;
   word-wrap: break-word;
   overflow-wrap: break-word;
   opacity: 0;
@@ -40,10 +39,11 @@ body {
 
 @keyframes fadein3 {
   from {
-      opacity: 0; /* Початок з нульової прозорості */
+    opacity: 0;
   }
+
   to {
-      opacity: 1; /* Кінцево повністю видимий */
+    opacity: 1;
   }
 }
 
@@ -60,10 +60,11 @@ body {
 
 @keyframes fadein2 {
   from {
-      opacity: 0; /* Початок з нульової прозорості */
+    opacity: 0;
   }
+
   to {
-      opacity: 1; /* Кінцево повністю видимий */
+    opacity: 1;
   }
 }
 
@@ -77,10 +78,11 @@ body {
 
 @keyframes fadein {
   from {
-      opacity: 0; /* Початок з нульової прозорості */
+    opacity: 0;
   }
+
   to {
-      opacity: 1; /* Кінцево повністю видимий */
+    opacity: 1;
   }
 }
 
@@ -103,9 +105,7 @@ body {
   cursor: pointer;
   transition: background 0.3s, border-color 0.3s, color 0.3s;
   word-wrap: break-word;
-  /* Переносить довгі слова */
   overflow-wrap: break-word;
-  /* Альтернативний перенос для довгих рядків */
 }
 
 .quiz-option label:hover {

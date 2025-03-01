@@ -1,4 +1,4 @@
-body { 
+body {
     font-family: Arial, sans-serif;
     display: flex;
     justify-content: center;
@@ -6,26 +6,29 @@ body {
     height: 100vh;
     margin: 0;
     flex-direction: column;
-    background: linear-gradient(135deg, #9b59b6, #71b7e6,#e094fc , #3698da);
-    background-size: 400% 400%; 
-    animation: gradientShift 10s ease infinite; 
+    background: linear-gradient(135deg, #9b59b6, #71b7e6, #e094fc, #3698da);
+    background-size: 400% 400%;
+    animation: gradientShift 10s ease infinite;
 
 }
+
 @keyframes gradientShift {
     0% {
-        background-position: 0% 50%; 
+        background-position: 0% 50%;
     }
+
     50% {
-        background-position: 100% 50%; 
+        background-position: 100% 50%;
     }
+
     100% {
-        background-position: 0% 50%; 
+        background-position: 0% 50%;
     }
 }
 
 
 .swapConnectionRoom {
-   
+
     background-color: #E8FAF9;
     padding: 20px;
     border-radius: 8px;
@@ -64,17 +67,19 @@ body {
 }
 
 .message {
-    opacity: 0; /* Початково невидимий */
-    animation: fadeIn2 3s ease-in-out forwards; 
+    opacity: 0;
+    animation: fadeIn2 3s ease-in-out forwards;
     margin-top: 16px;
     color: red;
     text-align: center;
 }
+
 @keyframes fadeIn2 {
     from {
-        opacity: 1; /* Початок з нульової прозорості */
+        opacity: 1;
     }
+
     to {
-        opacity: 0; /* Кінцево повністю видимий */
+        opacity: 0;
     }
 }

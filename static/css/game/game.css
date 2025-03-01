@@ -92,7 +92,8 @@ body {
     margin-bottom: 20px;
     color: #666;
 }
-#beforeGameForceStart{
+
+#beforeGameForceStart {
     background-color: #9b59b6;
     color: #ffffff;
     font-size: 1em;
@@ -121,14 +122,8 @@ body {
 #game button:hover {
     background-color: #7c51a1;
 }
-/* 
-#beforeGameWait {
-    width: 300px;
-    background: #f0f0f0;
-    padding: 15px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-} */
+
+
 #leaderboard ul {
     list-style-type: none;
     padding: 0;
@@ -145,26 +140,26 @@ body {
     border-radius: 5px;
 }
 
-/* Different background colors for each rank */
 #leaderboard li:nth-child(1) {
-    background-color: #ff6f61; /* Red */
+    background-color: #ff6f61;
 }
 
 #leaderboard li:nth-child(2) {
-    background-color: #ff8e72; /* Light Red */
+    background-color: #ff8e72;
 }
 
 #leaderboard li:nth-child(3) {
-    background-color: #3c6e71; /* Dark Blue */
+    background-color: #3c6e71;
 }
 
 #leaderboard li:nth-child(4) {
-    background-color: #5390d9; /* Blue */
+    background-color: #5390d9;
 }
 
 #leaderboard li:nth-child(5) {
-    background-color: #41b3a3; /* Teal */
+    background-color: #41b3a3;
 }
+
 #beforeGameWait p {
     font-size: 1.2em;
     font-weight: bold;
@@ -187,7 +182,7 @@ body {
     padding: 10px;
     margin: 5px 0;
     border-radius: 5px;
-    background-color: #5390d9; /* Default color */
+    background-color: #5390d9;
 }
 
 

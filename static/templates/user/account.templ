@@ -20,18 +20,18 @@ templ LoadUserAccount(user *types.User, isOwner bool) {
 			</div>
 			<div id="userName" class="userName">{ user.UserName }</div>
 			if isOwner {
-				<button type="submit" id="GetLeaderboardHistory" class="btn" hx-post="/redirect-to-leaderboard-history">Leaderboard History</button>
+				<button type="submit" id="GetLeaderboardHistory" class="btn" hx-post="/redirect-to-leaderboard-history">Історія таблиці лідерів</button>
 			
-				<div id="descriptionLabel" class="descriptionLabel">Your Description :</div>
+				<div id="descriptionLabel" class="descriptionLabel">Ваш Опис:</div>
 				<form id="descriptionForm" class="descriptionForm" hx-post="/account/info/description/confirm" hx-swap="outerHTML">
 					<textarea id="descriptionInput" class="descriptionInput" rows="4" cols="40" name="description" maxlength="200">
 						{ user.Description }
 					</textarea>
 					<br/>
-					<button type="submit" id="setDescriptionButton" class="btn">Set Description</button>
+					<button type="submit" id="setDescriptionButton" class="btn">Обновити опис</button>
 				</form>
 			} else {
-				<div id="descriptionLabel" class="descriptionLabel">Description: </div>
+				<div id="descriptionLabel" class="descriptionLabel">Опис: </div>
 				<div id="userDescription" class="userDescription">{ user.Description }</div>
 			}
 		</div>

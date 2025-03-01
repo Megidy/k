@@ -23,27 +23,6 @@ body {
 }
 
 
-   
-    /* background: #7c49f1;
-    animation: backgroundColorShift 30s ease infinite; 
-/* }
-@keyframes backgroundColorShift {
-    0% {
-        background: #7c49f1; 
-    }
-    25% {
-        background: #71b7e6; 
-    }
-    50% {
-        background: #9b59b6;
-    }
-    75% {
-        background: #f3a683;
-    }
-    100% {
-        background: #7c49f1; 
-    }
-} */ 
 .topic {
     background-color: #E8FAF9;
     padding: 20px;

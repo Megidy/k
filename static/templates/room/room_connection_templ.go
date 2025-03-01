@@ -39,7 +39,7 @@ func LoadConnectionToRoom(message string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"swapConnectionRoom\"><div class=\"ConnectToRoom\"><form hx-post=\"/room/connect/confirm\" hx-swap=\"outerHTML\" hx-target=\".swapConnectionRoom\"><div class=\"form-group\"><label for=\"code\">code of room: </label> <input type=\"text\" id=\"code\" name=\"code\" placeholder=\"for example : WTd159Rq \" required></div><button type=\"submit\" class=\"btn\">Confirm</button></form></div><div class=\"message\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"swapConnectionRoom\"><div class=\"ConnectToRoom\"><form hx-post=\"/room/connect/confirm\" hx-swap=\"outerHTML\" hx-target=\".swapConnectionRoom\"><div class=\"form-group\"><label for=\"code\">Код кімнати: </label> <input type=\"text\" id=\"code\" name=\"code\" placeholder=\"для прикладу: WTd159Rq \" required></div><button type=\"submit\" class=\"btn\">Підтвердити</button></form></div><div class=\"message\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

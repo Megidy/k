@@ -16,14 +16,14 @@ templ LoadCreateTopic(message string) {
 			<div class="topic">
 				<form hx-post="/topic/create/confirm" hx-swap="outerHTML" hx-target=".topicSwapp">
 					<div class="form-group">
-						<label for="name">name of the topic : </label>
+						<label for="name">Назва теми: </label>
 						<input type="text" id="name" name="name" placeholder="name" required/>
 					</div>
 					<div class="form-group">
-						<label for="number">number of questions</label>
+						<label for="number">Кількість питань: </label>
 						<input type="number" id="number" name="number" placeholder="5-20" min="5" max="20" required/>
 					</div>
-					<button type="submit" class="btn">Confirm</button>
+					<button type="submit" class="btn">Підтвердити</button>
 				</form>
 				<div class="message">
 					{ message }

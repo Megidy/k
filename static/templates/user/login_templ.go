@@ -39,7 +39,7 @@ func Login(message string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"loginClassSwap\"><div class=\"login\" id=\"loginform\"><form hx-post=\"/account/login/confirm\" hx-swap=\"outerHTML\" hx-target=\".loginClassSwap\"><label for=\"email\">Your Email <i class=\"fa fa-envelope-o\"></i> :</label> <input type=\"email\" id=\"email\" name=\"email\" placeholder=\"Your Email\" required> <label for=\"password\">Your Password <i class=\"fa fa-key\"></i> :</label> <input type=\"password\" id=\"password\" name=\"password\" placeholder=\"password\" required> <button type=\"submit\" class=\"btn\">Log In <i class=\"fa fa-sign-in\"></i></button> <a href=\"/account/create\" class=\"link\">Don't have an account yet?</a><div class=\"message\"><h>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"loginClassSwap\"><div class=\"login\" id=\"loginform\"><form hx-post=\"/account/login/confirm\" hx-swap=\"outerHTML\" hx-target=\".loginClassSwap\"><label for=\"email\">Ваш email<i class=\"fa fa-envelope-o\"></i> :</label> <input type=\"email\" id=\"email\" name=\"email\" placeholder=\"Email\" required> <label for=\"password\">Ваш пароль<i class=\"fa fa-key\"></i> :</label> <input type=\"password\" id=\"password\" name=\"password\" placeholder=\"Password\" required> <button type=\"submit\" class=\"btn\">Log In <i class=\"fa fa-sign-in\"></i></button> <a href=\"/account/create\" class=\"link\">Ще немаєте акаунту?</a><div class=\"message\"><h>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

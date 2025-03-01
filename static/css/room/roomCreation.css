@@ -7,25 +7,28 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #9b59b6, #71b7e6,#e094fc , #3698da);
-    background-size: 400% 400%; 
-    animation: gradientShift 10s ease infinite; 
+  background: linear-gradient(135deg, #9b59b6, #71b7e6, #e094fc, #3698da);
+  background-size: 400% 400%;
+  animation: gradientShift 10s ease infinite;
 
 }
+
 @keyframes gradientShift {
-    0% {
-        background-position: 0% 50%; 
-    }
-    50% {
-        background-position: 100% 50%; 
-    }
-    100% {
-        background-position: 0% 50%; 
-    }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .roomCreationWrapper {
-  width: 300px;  /* Reduced width */
+  width: 300px;
   padding: 20px;
   background: #E8FAF9;
   border-radius: 8px;
@@ -50,7 +53,7 @@ body {
 }
 
 .roomCreationWrapper input[type="number"],
-.roomCreationWrapper input[type="radio"] + label {
+.roomCreationWrapper input[type="radio"]+label {
   display: block;
   width: 100%;
   padding: 10px;
@@ -69,14 +72,14 @@ body {
   display: none;
 }
 
-.roomCreationWrapper input[type="radio"] + label {
-  display: inline-block; /* Adjust to prevent radio button from shifting right */
-  width: auto; /* Ensure label size fits radio button */
+.roomCreationWrapper input[type="radio"]+label {
+  display: inline-block;
+  width: auto;
   padding: 10px;
   cursor: pointer;
 }
 
-.roomCreationWrapper input[type="radio"]:checked + label {
+.roomCreationWrapper input[type="radio"]:checked+label {
   background: #71b7e6;
   border-color: #5a8cb9;
   color: #fff;

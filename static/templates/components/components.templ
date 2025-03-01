@@ -7,7 +7,7 @@ import (
 
 templ Waiting(usernames []string) {
 	<div hx-swap-oob="innerHTML:#game">
-		<p>You Have Done this Question :), now wait for this players: </p>
+		<p>Ви відповіли на це питання , тепер почекайте на цих гравців </p>
 		<ul>
 			for _,username:=range usernames {
 				<li>
@@ -20,7 +20,7 @@ templ Waiting(usernames []string) {
 
 templ SpectatorWaitList(usernames []string) {
 	<div hx-swap-oob="innerHTML:#currNotReadyPlayers">
-		<p>didn't comlete question yet : </p>
+		<p>ще не відповіли на питання: </p>
 		<ul>
 			for _,username:=range usernames {
 				<li>
@@ -33,7 +33,7 @@ templ SpectatorWaitList(usernames []string) {
 
 templ BeforeGameWaitList(usernames []string) {
 	<div hx-swap-oob="innerHTML:#beforeGameWait">
-		<p>Connected Players : </p>
+		<p>Підключені користувачі: </p>
 		<ul>
 			for _,username:=range usernames {
 				<li>
@@ -49,13 +49,13 @@ templ TimeLoader(time int) {
 		<link rel="stylesheet" href="/static/css/game/timeLoader.css"/>
 	</head>
 	<div class="time-container" style="background-color: #f38e8e; border: 1px solid #ccc; padding: 10px; border-radius: 5px; max-width: 200px; text-align: center;" hx-swap-oob="innerHTML:#time" >
-		<h3>time left : { fmt.Sprintf("%d",time) }</h3>
+		<h3>лишилось часу: { fmt.Sprintf("%d",time) }</h3>
 	</div>
 }
 
 templ LoadDuplicate() {
 	<div hx-swap-oob="innerHTML:#game">
-		<p>You are already connected to this Room</p>
+		<p>Ви вже під'єднанні до цієї кімнати</p>
 	</div>
 }
 

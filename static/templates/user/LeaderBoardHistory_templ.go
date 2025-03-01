@@ -38,7 +38,7 @@ func LoadUserLeaderBoardHistory(hasGames bool, leaderBoardHistory []types.UserLe
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<head><script src=\"https://unpkg.com/htmx.org@1.9.2\"></script><title>Leaderboard History</title><link rel=\"stylesheet\" href=\"/static/css/user/leaderboard.css\"></head><body><div class=\"leaderboard-container\"><h2>Leaderboard History</h2>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<head><script src=\"https://unpkg.com/htmx.org@1.9.2\"></script><title>Історія талиці лідерів</title><link rel=\"stylesheet\" href=\"/static/css/user/leaderboard.css\"></head><body><div class=\"leaderboard-container\"><h2>Історія таблиці лідерів</h2>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -97,7 +97,7 @@ func LoadUserLeaderBoardHistory(hasGames bool, leaderBoardHistory []types.UserLe
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<div class=\"no-games\">No rooms found.</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<div class=\"no-games\">Не найдено тестувань.</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
